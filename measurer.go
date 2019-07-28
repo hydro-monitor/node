@@ -18,7 +18,7 @@ func NewMeasurer(channel chan int, wg *sync.WaitGroup) *Measurer {
 }
 
 func (m *Measurer) start() error {
-	defer m.wg.Done() // Nunca se llama, siempre esta en escuchando el chan
+	defer m.wg.Done()
 	for {
 		select {
 		case data := <-m.channel:
