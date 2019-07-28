@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sync"
 	"time"
 )
 
@@ -9,18 +10,28 @@ const (
 )
 
 type Node struct {
-	trigger *Trigger
+	trigger  *Trigger
+	measurer *Measurer
 }
 
-func NewNode() *Node {
+func NewNode(c chan int, wg *sync.WaitGroup) *Node {
 	return &Node{
-		trigger: NewTrigger(INTERVAL),
+		trigger:  NewTrigger(INTERVAL, c, wg),
+		measurer: NewMeasurer(c, wg),
 	}
 }
 
 func main() {
-	n := NewNode()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	c := make(chan int)
+	n := NewNode(c, &wg)
+
+	go n.measurer.start()
 	n.trigger.start()
+
 	time.Sleep(2000 * time.Millisecond)
+
 	n.trigger.stop()
+	wg.Wait()
 }
