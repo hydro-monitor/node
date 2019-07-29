@@ -1,4 +1,4 @@
-package main
+package trigger
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ func NewTrigger(interval int, channel chan int, wg *sync.WaitGroup) *Trigger {
 	}
 }
 
-func (t *Trigger) start() error {
+func (t *Trigger) Start() error {
 	t.ticker = time.NewTicker(t.interval * time.Millisecond)
 	go func() {
 		for time := range t.ticker.C {
@@ -32,7 +32,7 @@ func (t *Trigger) start() error {
 	return nil
 }
 
-func (t *Trigger) stop() error {
+func (t *Trigger) Stop() error {
 	t.ticker.Stop()
 	t.channel <- 0
 	defer t.wg.Done()

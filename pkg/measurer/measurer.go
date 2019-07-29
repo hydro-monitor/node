@@ -1,4 +1,4 @@
-package main
+package measurer
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func NewMeasurer(channel chan int, wg *sync.WaitGroup) *Measurer {
 	}
 }
 
-func (m *Measurer) start() error {
+func (m *Measurer) Start() error {
 	defer m.wg.Done()
 	for {
 		select {

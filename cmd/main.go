@@ -3,6 +3,9 @@ package main
 import (
 	"sync"
 	"time"
+
+	"github.com/hydro-monitor/node/pkg/measurer"
+	"github.com/hydro-monitor/node/pkg/trigger"
 )
 
 const (
@@ -10,14 +13,14 @@ const (
 )
 
 type Node struct {
-	trigger  *Trigger
-	measurer *Measurer
+	t *trigger.Trigger
+	m *measurer.Measurer
 }
 
 func NewNode(c chan int, wg *sync.WaitGroup) *Node {
 	return &Node{
-		trigger:  NewTrigger(INTERVAL, c, wg),
-		measurer: NewMeasurer(c, wg),
+		t: trigger.NewTrigger(INTERVAL, c, wg),
+		m: measurer.NewMeasurer(c, wg),
 	}
 }
 
@@ -27,11 +30,11 @@ func main() {
 	c := make(chan int)
 	n := NewNode(c, &wg)
 
-	go n.measurer.start()
-	n.trigger.start()
+	go n.m.Start()
+	n.t.Start()
 
 	time.Sleep(2000 * time.Millisecond)
 
-	n.trigger.stop()
+	n.t.Stop()
 	wg.Wait()
 }
