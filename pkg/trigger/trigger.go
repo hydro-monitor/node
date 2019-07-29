@@ -1,9 +1,10 @@
 package trigger
 
 import (
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 type Trigger struct {
@@ -25,7 +26,7 @@ func (t *Trigger) Start() error {
 	t.ticker = time.NewTicker(t.interval * time.Millisecond)
 	go func() {
 		for time := range t.ticker.C {
-			fmt.Println("Tick at", time)
+			glog.Info("Tick at", time)
 			t.channel <- 1
 		}
 	}()
@@ -36,6 +37,6 @@ func (t *Trigger) Stop() error {
 	t.ticker.Stop()
 	t.channel <- 0
 	defer t.wg.Done()
-	fmt.Println("Ticker stopped")
+	glog.Info("Ticker stopped")
 	return nil
 }

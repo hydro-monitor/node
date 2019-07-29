@@ -3,6 +3,8 @@ package measurer
 import (
 	"fmt"
 	"sync"
+
+	"github.com/golang/glog"
 )
 
 type Measurer struct {
@@ -23,11 +25,12 @@ func (m *Measurer) Start() error {
 		select {
 		case data := <-m.channel:
 			if data == 1 {
-				fmt.Println("Received alert from Trigger")
+				glog.Info("Received alert from Trigger")
 			} else if data == 0 {
-				fmt.Println("Received stop from Trigger")
+				glog.Info("Received stop from Trigger")
 				return nil
 			} else {
+				glog.Errorf("Did not recognize data sent though chan: %v", data)
 				return fmt.Errorf("Did not recognize data sent though chan: %v", data)
 			}
 		}

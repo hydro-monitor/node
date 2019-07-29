@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"sync"
 	"time"
 
@@ -11,6 +12,10 @@ import (
 const (
 	INTERVAL = 500
 )
+
+func init() {
+	flag.Set("logtostderr", "true")
+}
 
 type Node struct {
 	t *trigger.Trigger
@@ -25,6 +30,7 @@ func NewNode(c chan int, wg *sync.WaitGroup) *Node {
 }
 
 func main() {
+	flag.Parse()
 	var wg sync.WaitGroup
 	wg.Add(2)
 	c := make(chan int)
