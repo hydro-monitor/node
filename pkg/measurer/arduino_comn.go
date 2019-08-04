@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	SERIAL = "/dev/tty.usbmodem1421"
+	SERIAL = "/dev/cu.usbmodem1421"
 	BAUD   = 9600
 )
 
@@ -47,13 +47,31 @@ func (ac *ArduinoCommunicator) RequestMeasurement() error {
 	return nil
 }
 
-func (ac *ArduinoCommunicator) ReadMeasurement(buffer []byte) (int, error) {
-	// Read will block until at least one byte is returned
+func (ac *ArduinoCommunicator) read(buffer []byte) (int, error) {
 	n, err := ac.port.Read(buffer)
 	if err != nil {
 		glog.Errorf("Error reding from serial port %v", err)
 		return n, err
 	}
+	return n, nil
+}
+
+func (ac *ArduinoCommunicator) ReadMeasurement(buffer []byte) (int, error) {
+	// Read will block until at least one byte is returned
+	n, err := ac.read(buffer)
+	if err != nil {
+		return n, err
+	}
+	glog.Infof("Data received is: %q", buffer[:n])
+
+	for buffer[n-1] != '\n' {
+		n_tmp, err := ac.read(buffer[n:])
+		if err != nil {
+			return n + n_tmp, err
+		}
+		n = n + n_tmp
+	}
+
 	glog.Infof("Measurement received is: %q", buffer[:n])
 	return n, nil
 }
