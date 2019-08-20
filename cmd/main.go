@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hydro-monitor/node/pkg/analyzer"
 	"github.com/hydro-monitor/node/pkg/measurer"
 	"github.com/hydro-monitor/node/pkg/trigger"
 )
@@ -20,12 +21,14 @@ func init() {
 type Node struct {
 	t *trigger.Trigger
 	m *measurer.Measurer
+	a *analyzer.Analyzer
 }
 
-func NewNode(c chan int, wg *sync.WaitGroup) *Node {
+func NewNode(trigger_measurer, trigger_analyzer, measurer_analyzer chan int, wg *sync.WaitGroup) *Node {
 	return &Node{
-		t: trigger.NewTrigger(INTERVAL, c, wg),
-		m: measurer.NewMeasurer(c, wg),
+		t: trigger.NewTrigger(INTERVAL, trigger_measurer, trigger_analyzer, wg),
+		m: measurer.NewMeasurer(trigger_measurer, measurer_analyzer, wg),
+		a: analyzer.NewAnalyzer(measurer_analyzer, trigger_analyzer, wg),
 	}
 }
 
@@ -33,9 +36,12 @@ func main() {
 	flag.Parse()
 	var wg sync.WaitGroup
 	wg.Add(2)
-	c := make(chan int)
-	n := NewNode(c, &wg)
+	trigger_measurer := make(chan int)
+	trigger_analyzer := make(chan int)
+	measurer_analyzer := make(chan int)
+	n := NewNode(trigger_measurer, trigger_analyzer, measurer_analyzer, &wg)
 
+	go n.a.Start()
 	go n.m.Start()
 	n.t.Start()
 
