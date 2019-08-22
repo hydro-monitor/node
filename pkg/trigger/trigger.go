@@ -8,7 +8,7 @@ import (
 )
 
 type Trigger struct {
-	timer         *time.Timer
+	timer         *time.Ticker
 	interval      time.Duration // In milliseconds
 	measurer_chan chan int
 	analyzer_chan chan int
@@ -25,12 +25,13 @@ func NewTrigger(interval int, measurer_chan chan int, analyzer_chan chan int, wg
 }
 
 func (t *Trigger) Start() error {
+	t.timer = time.NewTicker(t.interval * time.Millisecond)
 	for {
-		t.timer = time.NewTimer(t.interval * time.Millisecond)
 		select {
 		case newInterval := <-t.analyzer_chan:
 			t.timer.Stop()
 			t.interval = time.Duration(newInterval)
+			t.timer = time.NewTicker(t.interval * time.Millisecond)
 			glog.Info("Old timer stopped. New interval: %s", newInterval)
 		case time := <-t.timer.C:
 			glog.Info("Tick at ", time)

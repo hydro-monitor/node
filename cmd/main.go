@@ -43,7 +43,7 @@ func main() {
 
 	go n.a.Start()
 	go n.m.Start()
-	n.t.Start()
+	go n.t.Start()
 
 	time.Sleep(2000 * time.Millisecond)
 
