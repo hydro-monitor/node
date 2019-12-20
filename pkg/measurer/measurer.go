@@ -10,12 +10,12 @@ import (
 
 type Measurer struct {
 	trigger_chan  chan int
-	analyzer_chan chan int
+	analyzer_chan chan float64
 	wg            *sync.WaitGroup
 	comm          *ArduinoCommunicator
 }
 
-func NewMeasurer(trigger_chan, analyzer_chan chan int, wg *sync.WaitGroup) *Measurer {
+func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
 	return &Measurer{
 		trigger_chan:  trigger_chan,
 		analyzer_chan: analyzer_chan,
@@ -43,12 +43,12 @@ func (m *Measurer) takeMeasurement() {
 
 	glog.Infof("Measurement received: %q", buffer[:n])
 	s := string(buffer[:n])
-	i, err := strconv.Atoi(s)
+	f, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		glog.Errorf("Failed to convert string '%s' to int: %v", s, err)
 	}
-	glog.Infof("Sending measurement %d to analyzer", i)
-	m.analyzer_chan <- i
+	glog.Infof("Sending measurement %f to analyzer", f)
+	m.analyzer_chan <- f
 }
 
 func (m *Measurer) Start() error {

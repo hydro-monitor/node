@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/hydro-monitor/node/pkg/analyzer"
+	"github.com/hydro-monitor/node/pkg/config"
 	"github.com/hydro-monitor/node/pkg/measurer"
 	"github.com/hydro-monitor/node/pkg/trigger"
 )
@@ -18,35 +19,41 @@ func init() {
 	flag.Set("logtostderr", "true")
 }
 
-type Node struct {
-	t *trigger.Trigger
-	m *measurer.Measurer
-	a *analyzer.Analyzer
+type node struct {
+	t  *trigger.Trigger
+	m  *measurer.Measurer
+	a  *analyzer.Analyzer
+	cw *config.ConfigWatcher
 }
 
-func NewNode(trigger_measurer, trigger_analyzer, measurer_analyzer chan int, wg *sync.WaitGroup) *Node {
-	return &Node{
-		t: trigger.NewTrigger(INTERVAL, trigger_measurer, trigger_analyzer, wg),
-		m: measurer.NewMeasurer(trigger_measurer, measurer_analyzer, wg),
-		a: analyzer.NewAnalyzer(measurer_analyzer, trigger_analyzer, wg),
+// NewNode creates a new node with all it's correspondant processes
+func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig chan int, measurerAnalyzer chan float64, configAnalyzer chan *config.Configutation, wg *sync.WaitGroup) *node {
+	return &node{
+		t:  trigger.NewTrigger(INTERVAL, triggerMeasurer, triggerAnalyzer, wg),
+		m:  measurer.NewMeasurer(triggerMeasurer, measurerAnalyzer, wg),
+		a:  analyzer.NewAnalyzer(measurerAnalyzer, triggerAnalyzer, configAnalyzer, wg),
+		cw: config.NewConfigWatcher(triggerConfig, configAnalyzer, INTERVAL, wg),
 	}
 }
 
 func main() {
 	flag.Parse()
 	var wg sync.WaitGroup
-	wg.Add(2)
-	trigger_measurer := make(chan int)
-	trigger_analyzer := make(chan int)
-	measurer_analyzer := make(chan int)
-	n := NewNode(trigger_measurer, trigger_analyzer, measurer_analyzer, &wg)
+	wg.Add(4)
+	triggerMeasurer := make(chan int)
+	triggerAnalyzer := make(chan int)
+	measurerAnalyzer := make(chan float64)
+	triggerConfig := make(chan int)
+	configAnalyzer := make(chan *config.Configutation)
+	n := newNode(triggerMeasurer, triggerAnalyzer, triggerConfig, measurerAnalyzer, configAnalyzer, &wg)
 
 	go n.a.Start()
 	go n.m.Start()
 	go n.t.Start()
+	go n.cw.Start()
 
 	time.Sleep(2000 * time.Millisecond)
 
-	n.t.Stop()
+	n.t.Stop(triggerConfig)
 	wg.Wait()
 }
