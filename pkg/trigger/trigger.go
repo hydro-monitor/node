@@ -31,9 +31,9 @@ func (t *Trigger) Start() error {
 		case newInterval := <-t.analyzer_chan:
 			t.timer.Stop()
 			t.interval = time.Duration(newInterval)
-			glog.Info("NEW INTERVAL RECEIVED, CREATING NEW TICKER") // FIXME remove me
+			glog.Infof("NEW INTERVAL RECEIVED, CREATING NEW TICKER WITH INTERVAL %d %v", newInterval, t.interval) // FIXME remove me
 			t.timer = time.NewTicker(t.interval * time.Millisecond)
-			glog.Info("Old timer stopped. New interval: %s", newInterval)
+			glog.Infof("Old timer stopped. New interval: %d", newInterval)
 		case time := <-t.timer.C:
 			glog.Infof("Tick at %v. Awaking Measurer", time)
 			t.measurer_chan <- 1

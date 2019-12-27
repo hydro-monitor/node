@@ -48,7 +48,7 @@ func (a *Analyzer) updateCurrentState(newStateName string) {
 	glog.Infof("New current state is %s", newStateName)
 	a.currentState = newStateName
 	newInterval := a.config.GetState(newStateName).Interval
-	glog.Infof("Sending new current interval (%d) to Trigger", newStateName)
+	glog.Infof("Sending new current interval (%d) to Trigger", newInterval)
 	a.trigger_chan <- newInterval
 }
 
@@ -60,8 +60,7 @@ func (a *Analyzer) analyze(measurement float64) {
 			glog.Info("Current state not found, skipping analysis")
 			return
 		} else {
-			a.currentState = currentStateName
-			a.trigger_chan <- a.config.GetState(currentStateName).Interval
+			a.updateCurrentState(currentStateName)
 		}
 	}
 	if measurement > a.config.GetState(a.currentState).UpperLimit { // TODO Deal with measurements equal to limits

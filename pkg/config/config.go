@@ -71,7 +71,8 @@ func (c *ConfigWatcher) updateConfiguration() {
 	}
 	glog.Info("Sending new node configuration")
 	config := &Configutation{
-		states: states,
+		stateNames: []string{"Normal"},
+		states:     states,
 	}
 	select {
 	case c.analyzer_chan <- config:
