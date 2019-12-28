@@ -59,7 +59,7 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	glog.Info("Awaiing signal")
+	glog.Info("Awaiting signal")
 	sig := <-sigs
 	glog.Infof("Signal received: %v. Stopping workers", sig)
 
