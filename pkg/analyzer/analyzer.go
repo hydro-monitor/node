@@ -13,6 +13,7 @@ type Analyzer struct {
 	trigger_chan        chan int
 	measurer_chan       chan float64
 	config_watcher_chan chan *config.Configutation
+	stop_chan           chan int
 	config              *config.Configutation
 	currentState        string
 }
@@ -29,6 +30,7 @@ func NewAnalyzer(measurer_chan chan float64, trigger_chan chan int, config_watch
 		trigger_chan:        trigger_chan,
 		measurer_chan:       measurer_chan,
 		config_watcher_chan: config_watcher_chan,
+		stop_chan:           make(chan int),
 	}
 	return a
 }
@@ -86,9 +88,15 @@ func (a *Analyzer) Start() error {
 				continue
 			}
 			a.analyze(measurement)
-		case <-a.trigger_chan:
-			glog.Info("Received stop from Trigger")
+		case <-a.stop_chan:
+			glog.Info("Received stop sign")
 			return nil
 		}
 	}
+}
+
+func (a *Analyzer) Stop() error {
+	glog.Info("Sending stop sign")
+	a.stop_chan <- 1
+	return nil
 }

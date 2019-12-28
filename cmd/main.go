@@ -2,8 +2,12 @@ package main
 
 import (
 	"flag"
+	"os"
+	"os/signal"
 	"sync"
-	"time"
+	"syscall"
+
+	"github.com/golang/glog"
 
 	"github.com/hydro-monitor/node/pkg/analyzer"
 	"github.com/hydro-monitor/node/pkg/config"
@@ -52,8 +56,17 @@ func main() {
 	go n.t.Start()
 	go n.cw.Start()
 
-	time.Sleep(2000 * time.Millisecond)
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	n.t.Stop(triggerConfig)
+	glog.Info("Awaiing signal")
+	sig := <-sigs
+	glog.Infof("Signal received: %v. Stopping workers", sig)
+
+	n.t.Stop()
+	n.m.Stop()
+	n.a.Stop()
+	n.cw.Stop()
+
 	wg.Wait()
 }

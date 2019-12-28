@@ -45,6 +45,7 @@ type ConfigWatcher struct {
 	wg            *sync.WaitGroup
 	trigger_chan  chan int
 	analyzer_chan chan *Configutation
+	stop_chan     chan int
 	interval      time.Duration // In milliseconds
 }
 
@@ -53,6 +54,7 @@ func NewConfigWatcher(trigger_chan chan int, analyzer_chan chan *Configutation, 
 		wg:            wg,
 		trigger_chan:  trigger_chan,
 		analyzer_chan: analyzer_chan,
+		stop_chan:     make(chan int),
 		interval:      time.Duration(interval),
 	}
 	return c
@@ -90,10 +92,16 @@ func (c *ConfigWatcher) Start() error {
 		case time := <-timer.C:
 			glog.Infof("Tick at %v. Quering server for node configuration.", time)
 			c.updateConfiguration()
-		case <-c.trigger_chan:
-			glog.Info("Received stop from Trigger")
+		case <-c.stop_chan:
+			glog.Info("Received stop from sign")
 			timer.Stop()
 			return nil
 		}
 	}
+}
+
+func (c *ConfigWatcher) Stop() error {
+	glog.Info("Sending stop sign")
+	c.stop_chan <- 1
+	return nil
 }

@@ -1,7 +1,6 @@
 package measurer
 
 import (
-	"fmt"
 	"strconv"
 	"sync"
 
@@ -11,6 +10,7 @@ import (
 type Measurer struct {
 	trigger_chan  chan int
 	analyzer_chan chan float64
+	stop_chan     chan int
 	wg            *sync.WaitGroup
 	comm          *ArduinoCommunicator
 }
@@ -19,6 +19,7 @@ func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.Wai
 	return &Measurer{
 		trigger_chan:  trigger_chan,
 		analyzer_chan: analyzer_chan,
+		stop_chan:     make(chan int),
 		wg:            wg,
 		//comm:          NewArduinoCommunicator(), FIXME
 	}
@@ -55,17 +56,18 @@ func (m *Measurer) Start() error {
 	defer m.wg.Done()
 	for {
 		select {
-		case data := <-m.trigger_chan:
-			if data == 1 {
-				glog.Info("Received alert from Trigger. Requesting measurement")
-				m.takeMeasurement()
-			} else if data == 0 {
-				glog.Info("Received stop from Trigger")
-				return nil
-			} else {
-				glog.Errorf("Did not recognize data sent though chan: %v", data)
-				return fmt.Errorf("Did not recognize data sent though chan: %v", data)
-			}
+		case <-m.trigger_chan:
+			glog.Info("Received alert from Trigger. Requesting measurement")
+			m.takeMeasurement()
+		case <-m.stop_chan:
+			glog.Info("Received stop sign")
+			return nil
 		}
 	}
+}
+
+func (m *Measurer) Stop() error {
+	glog.Info("Sending stop sign")
+	m.stop_chan <- 1
+	return nil
 }
