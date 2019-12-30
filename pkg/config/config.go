@@ -1,42 +1,38 @@
 package config
 
 import (
-	"math"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/golang/glog"
-)
 
-// estados(ID nodo (text),
-//         nombre (text),
-//         cantidad de fotos a tomar por medición (int),
-//         cada cuantos ms tiempo toma medición (int),
-//         límite de nivel de agua para pasar al estado anterior (float),
-//         límite de nivel de agua para pasar al estado siguiente (float),
-//         nombre estado anterior (text),
-//         nombre estado siguiente (text))
-type State struct {
-	Name        string
-	Interval    int
-	UpperLimit  float64
-	LowerLimit  float64
-	PicturesNum int
-	Next        string // State name (key)
-	Prev        string // State name (key)
-}
+	"github.com/hydro-monitor/node/pkg/server"
+)
 
 // Map with all posible states in the node configuration.
 type Configutation struct {
 	stateNames []string
-	states     map[string]State
+	states     map[string]server.State
+}
+
+func NewConfiguration(states map[string]server.State) (c *Configutation) {
+	stateNames := []string{}
+	for k := range states {
+		stateNames = append(stateNames, k)
+	}
+
+	return &Configutation{
+		stateNames: stateNames,
+		states:     states,
+	}
 }
 
 func (c *Configutation) GetStates() []string {
 	return c.stateNames
 }
 
-func (c *Configutation) GetState(stateName string) State {
+func (c *Configutation) GetState(stateName string) server.State {
 	return c.states[stateName]
 }
 
@@ -60,27 +56,21 @@ func NewConfigWatcher(trigger_chan chan int, analyzer_chan chan *Configutation, 
 	return c
 }
 
-func (c *ConfigWatcher) updateConfiguration() {
-	// TODO Add query for node config to the server
-	states := map[string]State{
-		"Normal": State{
-			Name:        "Normal",
-			Interval:    60,
-			PicturesNum: 0,
-			UpperLimit:  math.Inf(1),
-			LowerLimit:  math.Inf(-1),
-		},
+func (c *ConfigWatcher) updateConfiguration() error {
+	serverConfig, err := server.GetNodeConfiguration()
+	if err != nil {
+		glog.Errorf("Could not get configuration from server: %v", err)
+		return err
 	}
-	glog.Info("Sending new node configuration")
-	config := &Configutation{
-		stateNames: []string{"Normal"},
-		states:     states,
-	}
+	config := NewConfiguration(serverConfig.States)
+	glog.Infof("Sending new node configuration: %v", config)
 	select {
 	case c.analyzer_chan <- config:
 		glog.Info("Configuration update sent")
+		return nil
 	case <-time.After(10 * time.Second):
 		glog.Info("Configuration update timed out")
+		return fmt.Errorf("Configuration update timed out")
 	}
 }
 
