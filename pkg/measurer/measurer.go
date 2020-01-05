@@ -3,8 +3,11 @@ package measurer
 import (
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/golang/glog"
+
+	"github.com/hydro-monitor/node/pkg/server"
 )
 
 type Measurer struct {
@@ -50,6 +53,14 @@ func (m *Measurer) takeMeasurement() {
 	}
 	glog.Infof("Sending measurement %f to analyzer", f)
 	m.analyzer_chan <- f
+	glog.Infof("Sending measurement %f to server", f)
+	err = server.PostNodeMeasurement(server.APIMeasurement{
+		Time:       time.Now(),
+		WaterLevel: f,
+	})
+	if err != nil {
+		glog.Errorf("Error sending measurement %f to server: %v", f, err)
+	}
 }
 
 func (m *Measurer) Start() error {
