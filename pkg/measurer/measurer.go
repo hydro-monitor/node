@@ -2,6 +2,7 @@ package measurer
 
 import (
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -46,10 +47,11 @@ func (m *Measurer) takeMeasurement() {
 	*/
 
 	glog.Infof("Measurement received: %q", buffer[:n])
-	s := string(buffer[:n])
-	f, err := strconv.ParseFloat(s, 64)
+	str := string(buffer[:n])
+	nStr := strings.TrimRight(str, "\r\n")
+	f, err := strconv.ParseFloat(nStr, 64)
 	if err != nil {
-		glog.Errorf("Failed to convert string '%s' to int: %v", s, err)
+		glog.Errorf("Failed to convert string '%s' to int: %v", nStr, err)
 	}
 	glog.Infof("Sending measurement %f to analyzer", f)
 	m.analyzer_chan <- f
