@@ -6,7 +6,7 @@ After=multi-user.target network.target
 Type=simple
 Restart=on-failure
 RestartSec=10
-ExecStart=go /home/pi/Documents/node/_output/node
+ExecStart=/home/pi/Documents/node/_output/node
 
 StandardOutput=syslog
 StandardError=syslog
