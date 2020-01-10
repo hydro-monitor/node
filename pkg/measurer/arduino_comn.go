@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	SERIAL = "/dev/cu.usbmodem1421"
+	SERIAL = "/dev/ttyACM0"
 	BAUD   = 9600
 )
 

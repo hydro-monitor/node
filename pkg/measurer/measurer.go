@@ -24,26 +24,26 @@ func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.Wai
 		analyzer_chan: analyzer_chan,
 		stop_chan:     make(chan int),
 		wg:            wg,
-		//comm:          NewArduinoCommunicator(), FIXME
+		comm:          NewArduinoCommunicator(),
 	}
 }
 
 func (m *Measurer) takeMeasurement() {
-	/*
-		if err := m.comm.RequestMeasurement(); err != nil {
-			glog.Errorf("Error requesting measurement to Arduino %v", err)
-		}
+	if err := m.comm.RequestMeasurement(); err != nil {
+		glog.Errorf("Error requesting measurement to Arduino %v", err)
+	}
 
+	buffer := make([]byte, 128)
+	n, err := m.comm.ReadMeasurement(buffer)
+	if err != nil {
+		glog.Errorf("Error reading measurement from Arduino %v", err)
+	}
+	/*
 		buffer := make([]byte, 128)
-		n, err := m.comm.ReadMeasurement(buffer)
-		if err != nil {
-			glog.Errorf("Error reading measurement from Arduino %v", err)
-		}
+		buffer[0] = '6'
+		buffer[1] = '5'
+		n := 2
 	*/
-	buffer := make([]byte, 128) // FIXME Delete me
-	buffer[0] = '6'
-	buffer[1] = '5'
-	n := 2
 
 	glog.Infof("Measurement received: %q", buffer[:n])
 	s := string(buffer[:n])
