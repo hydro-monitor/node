@@ -42,6 +42,7 @@ type ConfigWatcher struct {
 	trigger_chan  chan int
 	analyzer_chan chan *Configutation
 	stop_chan     chan int
+	timer         *time.Ticker
 	interval      time.Duration // In milliseconds
 }
 
@@ -76,21 +77,22 @@ func (c *ConfigWatcher) updateConfiguration() error {
 
 func (c *ConfigWatcher) Start() error {
 	defer c.wg.Done()
-	timer := time.NewTicker(c.interval * time.Millisecond)
+	c.timer = time.NewTicker(c.interval * time.Millisecond)
 	for {
 		select {
-		case time := <-timer.C:
+		case time := <-c.timer.C:
 			glog.Infof("Tick at %v. Quering server for node configuration.", time)
 			c.updateConfiguration()
 		case <-c.stop_chan:
 			glog.Info("Received stop from sign")
-			timer.Stop()
 			return nil
 		}
 	}
 }
 
 func (c *ConfigWatcher) Stop() error {
+	c.timer.Stop()
+	glog.Info("Timer stopped")
 	glog.Info("Sending stop sign")
 	c.stop_chan <- 1
 	return nil
