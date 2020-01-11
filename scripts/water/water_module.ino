@@ -19,15 +19,16 @@ NewPing sonar_1(TRIGGER_PIN_1, ECHO_PIN_1, MAX_DISTANCE);
 NewPing sonar_2(TRIGGER_PIN_2, ECHO_PIN_2, MAX_DISTANCE);
 NewPing sonar_3(TRIGGER_PIN_3, ECHO_PIN_3, MAX_DISTANCE);
 
-void setup()
-{
+void setup() {
 	Serial.begin(9600);	// Inicialización del puerto serie a 9600 bps
 }
 
-void loop()
-{
-	if(Serial.read() == 1)
-	{
+void loop() {
+	if(Serial.available()) {
+		// Recibir signal de medicion
+		byte byte_read;
+        byte_read = Serial.read();
+
   		// Variables para la medicion
 	  	int tiempo_sensor_1, tiempo_sensor_2, tiempo_sensor_3;
 		int distancia_sensor_1, distancia_sensor_2, distancia_sensor_3; 
@@ -43,13 +44,21 @@ void loop()
 		distancia_sensor_3 = sonar_3.convert_cm(tiempo_sensor_3);
 	 
 		// Calculo del nivel detectado en base a una verificación de 2 de 3
-		if(distancia_sensor_1 == distancia_sensor_2)
+		if (distancia_sensor_1 == distancia_sensor_2) {
 			nivel = SENSOR_DISTANCE - distancia_sensor_1;
-		else if(distancia_sensor_1 == distancia_sensor_3)
+			Serial.println(nivel);
+			return
+		} else if (distancia_sensor_1 == distancia_sensor_3) {
 			nivel = SENSOR_DISTANCE - distancia_sensor_1;
-		else if(distancia_sensor_2 == distancia_sensor_3)
+			Serial.println(nivel);
+			return
+		} else if (distancia_sensor_2 == distancia_sensor_3) {
 			nivel = SENSOR_DISTANCE - distancia_sensor_2;
-	}
+			Serial.println(nivel);
+			return
+		}
 
-	Serial.write(nivel);
+		// No hay coincidencia entre mediciones
+		Serial.println("Inconcluso");
+	}
 }
