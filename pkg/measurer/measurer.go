@@ -1,11 +1,13 @@
 package measurer
 
 import (
+	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/dhowden/raspicam"
 	"github.com/golang/glog"
 
 	"github.com/hydro-monitor/node/pkg/server"
@@ -29,7 +31,31 @@ func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.Wai
 	}
 }
 
-func (m *Measurer) takeMeasurement() {
+func (m *Measurer) takePicture(time time.Time) (string, error) {
+	fileName := time.String()
+	file, err := os.Create(fileName)
+	if err != nil {
+		glog.Errorf("Error creating file for picture: %v", err)
+		return "", err
+	}
+	defer file.Close()
+
+	stillConfig := raspicam.NewStill()
+
+	errCh := make(chan error)
+	go func() {
+		for x := range errCh {
+			glog.Info(os.Stderr, "%v\n", x)
+		}
+	}()
+
+	glog.Info("Capturing still with picamera")
+	raspicam.Capture(stillConfig, file, errCh)
+
+	return fileName, nil
+}
+
+func (m *Measurer) takeWaterLevelMeasurement() float64 {
 	if err := m.comm.RequestMeasurement(); err != nil {
 		glog.Errorf("Error requesting measurement to Arduino %v", err)
 	}
@@ -55,13 +81,31 @@ func (m *Measurer) takeMeasurement() {
 	}
 	glog.Infof("Sending measurement %f to analyzer", f)
 	m.analyzer_chan <- f
-	glog.Infof("Sending measurement %f to server", f)
+
+	return f
+}
+
+func (m *Measurer) takeMeasurement() {
+	time := time.Now()
+
+	glog.Info("Taking water level")
+	waterLevel := m.takeWaterLevelMeasurement()
+
+	glog.Info("Taking picture")
+	pictureFile, err := m.takePicture(time)
+	if err != nil {
+		glog.Errorf("Error taking picture: %v. Skipping measurement", err)
+		return
+	}
+
+	glog.Infof("Sending measurement %f to server", waterLevel)
 	err = server.PostNodeMeasurement(server.APIMeasurement{
-		Time:       time.Now(),
-		WaterLevel: f,
+		Time:       time,
+		WaterLevel: waterLevel,
+		Picture:    pictureFile,
 	})
 	if err != nil {
-		glog.Errorf("Error sending measurement %f to server: %v", f, err)
+		glog.Errorf("Error sending measurement %f to server: %v", waterLevel, err)
 	}
 }
 
