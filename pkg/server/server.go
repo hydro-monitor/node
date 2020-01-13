@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	getNodeConfigurationUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
-	postNodeMeasurementUrl  = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/node/%s/measurements"
-	getManualMeasurementRequestUrl  = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/node/%s/requests"
-	NODE_NAME               = "1"
+	getNodeConfigurationUrl        = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
+	postNodeMeasurementUrl         = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/node/%s/measurements"
+	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/node/%s/requests"
+	NODE_NAME                      = "1"
 )
 
 var client = &http.Client{Timeout: 10 * time.Second}
@@ -40,8 +40,9 @@ type APIConfigutation struct {
 }
 
 type APIMeasurement struct {
-	Time time.Time `json:"timestamp"`
-	WaterLevel float64 `json:"waterLevel"`
+	Time       time.Time `json:"timestamp"`
+	WaterLevel float64   `json:"waterLevel"`
+	//TODO Add when manual measurements are implemented WasManual bool `json:"wasManual"`
 	//TODO Add picture
 }
 
@@ -72,7 +73,7 @@ func PostNodeMeasurement(measurement APIMeasurement) error {
 	return nil
 }
 
-// TODO Check if request with state is needed or the fact that a request itself exists 
+// TODO Check if request with state is needed or the fact that a request itself exists
 // is enough to know a manual measurement was requested.
 // Also, we need another method to DELETE/PUT the manual request and let the server now the measurement was taken
 func GetManualMeasurementRequest() (bool, error) {
