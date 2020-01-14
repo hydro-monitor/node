@@ -3,6 +3,7 @@ package analyzer
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/golang/glog"
 	"github.com/hydro-monitor/node/pkg/config"
@@ -51,7 +52,12 @@ func (a *Analyzer) updateCurrentState(newStateName string) {
 	a.currentState = newStateName
 	newInterval := a.config.GetState(newStateName).Interval
 	glog.Infof("Sending new current interval (%d) to Trigger", newInterval)
-	a.trigger_chan <- newInterval
+	select {
+	case a.trigger_chan <- newInterval:
+		glog.Info("Interval update sent")
+	case <-time.After(10 * time.Second):
+		glog.Info("Interval update timed out")
+	}
 }
 
 func (a *Analyzer) analyze(measurement float64) {
