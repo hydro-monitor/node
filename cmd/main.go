@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	INTERVAL = 500
+	interval                    = 500
+	configurationUpdateInterval = 60
 )
 
 func init() {
@@ -33,10 +34,10 @@ type node struct {
 // NewNode creates a new node with all it's correspondant processes
 func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig chan int, measurerAnalyzer chan float64, configAnalyzer chan *config.Configutation, wg *sync.WaitGroup) *node {
 	return &node{
-		t:  trigger.NewTrigger(INTERVAL, triggerMeasurer, triggerAnalyzer, wg),
+		t:  trigger.NewTrigger(interval, triggerMeasurer, triggerAnalyzer, wg),
 		m:  measurer.NewMeasurer(triggerMeasurer, measurerAnalyzer, wg),
 		a:  analyzer.NewAnalyzer(measurerAnalyzer, triggerAnalyzer, configAnalyzer, wg),
-		cw: config.NewConfigWatcher(triggerConfig, configAnalyzer, INTERVAL, wg),
+		cw: config.NewConfigWatcher(triggerConfig, configAnalyzer, configurationUpdateInterval, wg),
 	}
 }
 

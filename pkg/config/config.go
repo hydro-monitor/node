@@ -77,7 +77,7 @@ func (c *ConfigWatcher) updateConfiguration() error {
 
 func (c *ConfigWatcher) Start() error {
 	defer c.wg.Done()
-	c.timer = time.NewTicker(c.interval * time.Millisecond)
+	c.timer = time.NewTicker(c.interval * time.Second)
 	for {
 		select {
 		case time := <-c.timer.C:
