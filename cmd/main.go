@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	interval                    = 500
+	interval                    = 10
 	configurationUpdateInterval = 60
 )
 
