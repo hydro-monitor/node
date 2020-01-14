@@ -70,7 +70,7 @@ func (c *ConfigWatcher) updateConfiguration() error {
 		glog.Info("Configuration update sent")
 		return nil
 	case <-time.After(10 * time.Second):
-		glog.Info("Configuration update timed out")
+		glog.Warning("Configuration update timed out")
 		return fmt.Errorf("Configuration update timed out")
 	}
 }

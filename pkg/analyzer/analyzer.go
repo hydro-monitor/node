@@ -56,7 +56,7 @@ func (a *Analyzer) updateCurrentState(newStateName string) {
 	case a.trigger_chan <- newInterval:
 		glog.Info("Interval update sent")
 	case <-time.After(10 * time.Second):
-		glog.Info("Interval update timed out")
+		glog.Warning("Interval update timed out")
 	}
 }
 

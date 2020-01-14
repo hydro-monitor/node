@@ -85,7 +85,12 @@ func (m *Measurer) takeWaterLevelMeasurement() float64 {
 		glog.Errorf("Failed to convert string '%s' to int: %v", nStr, err)
 	}
 	glog.Infof("Sending measurement %f to analyzer", f)
-	m.analyzer_chan <- f
+	select {
+	case m.analyzer_chan <- f:
+		glog.Info("Measurement sent")
+	case <-time.After(10 * time.Second):
+		glog.Warning("Measurement send timed out")
+	}
 
 	return f
 }
