@@ -89,7 +89,7 @@ func pictureUploadRequest(uri string, params map[string]string, path string) (*h
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", uri, body)
+	req, err := http.NewRequest("POST", fmt.Sprintf(uri, NODE_NAME), body)
 	if err != nil {
 		return nil, err
 	}
