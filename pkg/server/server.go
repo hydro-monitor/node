@@ -91,7 +91,8 @@ func pictureUploadRequest(uri string, params map[string]string, path string) (*h
 
 	req, err := http.NewRequest("POST", uri, body)
 	contentType := writer.FormDataContentType()
-	req.Header.Add("Content-Type", contentType)
+	header := req.Header
+	header.Set("Content-Type", contentType)
 	return req, err
 }
 
