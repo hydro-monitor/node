@@ -90,7 +90,10 @@ func pictureUploadRequest(uri string, params map[string]string, path string) (*h
 	}
 
 	req, err := http.NewRequest("POST", uri, body)
-	contentType := writer.FormDataContentType()
+	if err != nil {
+		return nil, err
+	}
+	contentType := writer.FormDataContentType() // FIXME unify
 	header := req.Header
 	header.Set("Content-Type", contentType)
 	return req, err
