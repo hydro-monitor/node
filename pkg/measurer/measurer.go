@@ -59,7 +59,10 @@ func (m *Measurer) takePicture(time time.Time) (string, error) {
 	glog.Info("Capturing still with picamera")
 	raspicam.Capture(stillConfig, file, errCh)
 
-	return fileName, fmt.Errorf(strings.Join(errStr, "\n"))
+	if len(errStr) > 0 {
+		return fileName, fmt.Errorf(strings.Join(errStr, "\n"))
+	}
+	return fileName, nil
 }
 
 func (m *Measurer) takeWaterLevelMeasurement() float64 {
