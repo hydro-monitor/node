@@ -37,8 +37,8 @@ func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.Wai
 }
 
 func (m *Measurer) takePicture(time time.Time) (string, error) {
-	fileName := time.String()
-	file, err := os.Create(fmt.Sprintf("%s/%s", picturesDir, fileName))
+	fileName := fmt.Sprintf("%s/%s", picturesDir, time.String())
+	file, err := os.Create(fileName)
 	if err != nil {
 		glog.Errorf("Error creating file for picture: %v", err)
 		return "", err

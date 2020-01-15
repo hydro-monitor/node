@@ -4,13 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 )
 
 const (
 	getNodeConfigurationUrl        = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
-	postNodeMeasurementUrl         = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/node/%s/measurements"
+	postNodeMeasurementUrl         = "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"
 	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/node/%s/requests"
 	NODE_NAME                      = "1"
 )
@@ -62,13 +66,47 @@ func GetNodeConfiguration() (*APIConfigutation, error) {
 	return &respConfig, err
 }
 
+func pictureUploadRequest(uri string, params map[string]string, path string) (*http.Request, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("Picture", filepath.Base(path))
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
+
+	for key, val := range params {
+		_ = writer.WriteField(key, val)
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", uri, body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return req, err
+}
+
 func PostNodeMeasurement(measurement APIMeasurement) error {
-	requestByte, _ := json.Marshal(measurement)
-	requestReader := bytes.NewReader(requestByte)
-	resp, err := client.Post(fmt.Sprintf(postNodeMeasurementUrl, NODE_NAME), "application/json", requestReader)
+	extraParams := map[string]string {
+		"Time": measurement.Time.String(),
+		"WaterLevel": fmt.Sprintf("%f", measurement.WaterLevel),
+	}
+	request, err := pictureUploadRequest(postNodeMeasurementUrl, extraParams, measurement.Picture)
 	if err != nil {
 		return err
 	}
+	resp, err := client.Do(request)
+	if err != nil {
+		return err
+	} 
 	defer resp.Body.Close()
 	return nil
 }
