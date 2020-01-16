@@ -47,7 +47,7 @@ type APIMeasurement struct {
 	Time       time.Time `json:"timestamp"`
 	WaterLevel float64   `json:"waterLevel"`
 	Picture    string    `json:"picture"`
-	//TODO Add when manual measurements are implemented WasManual bool `json:"wasManual"`
+	WasManual bool `json:"wasManual"`
 }
 
 type APIMeasurementRequest struct {

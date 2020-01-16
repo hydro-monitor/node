@@ -20,16 +20,18 @@ const (
 
 type Measurer struct {
 	trigger_chan  chan int
+	manual_chan   chan int
 	analyzer_chan chan float64
 	stop_chan     chan int
 	wg            *sync.WaitGroup
 	comm          *ArduinoCommunicator
 }
 
-func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
+func NewMeasurer(trigger_chan, manual_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
 	return &Measurer{
 		trigger_chan:  trigger_chan,
 		analyzer_chan: analyzer_chan,
+		manual_chan:   manual_chan,
 		stop_chan:     make(chan int),
 		wg:            wg,
 		comm:          NewArduinoCommunicator(),
@@ -100,7 +102,7 @@ func (m *Measurer) takeWaterLevelMeasurement() float64 {
 	return f
 }
 
-func (m *Measurer) takeMeasurement() {
+func (m *Measurer) takeMeasurement(manual bool) {
 	time := time.Now()
 
 	glog.Info("Taking water level")
@@ -118,6 +120,7 @@ func (m *Measurer) takeMeasurement() {
 		Time:       time,
 		WaterLevel: waterLevel,
 		Picture:    pictureFile,
+		WasManual:  manual,
 	})
 	if err != nil {
 		glog.Errorf("Error sending measurement %f to server: %v", waterLevel, err)
@@ -130,7 +133,10 @@ func (m *Measurer) Start() error {
 		select {
 		case <-m.trigger_chan:
 			glog.Info("Received alert from Trigger. Requesting measurement")
-			m.takeMeasurement()
+			m.takeMeasurement(false)
+		case <-m.manual_chan:
+			glog.Info("Received alert from ManualTrigger. Requesting measurement")
+			m.takeMeasurement(true)
 		case <-m.stop_chan:
 			glog.Info("Received stop sign")
 			return nil
