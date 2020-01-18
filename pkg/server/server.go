@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,7 +20,17 @@ const (
 	NODE_NAME                      = "1"
 )
 
-var client = &http.Client{Timeout: 10 * time.Second}
+//Configure TLS, etc.
+var tr = &http.Transport{
+	TLSClientConfig: &tls.Config{
+		InsecureSkipVerify: true,
+	},
+}
+
+var client = &http.Client{
+	Timeout:   10 * time.Second,
+	Transport: tr,
+}
 
 // estados(ID nodo (text),
 //         nombre (text),
@@ -98,8 +109,8 @@ func pictureUploadRequest(uri string, params map[string]string, path string) (*h
 }
 
 func PostNodeMeasurement(measurement APIMeasurement) error {
-	extraParams := map[string]string {
-		"Time": measurement.Time.String(),
+	extraParams := map[string]string{
+		"Time":       measurement.Time.String(),
 		"WaterLevel": fmt.Sprintf("%f", measurement.WaterLevel),
 	}
 	request, err := pictureUploadRequest(postNodeMeasurementUrl, extraParams, measurement.Picture)
@@ -109,7 +120,7 @@ func PostNodeMeasurement(measurement APIMeasurement) error {
 	resp, err := client.Do(request)
 	if err != nil {
 		return err
-	} 
+	}
 	defer resp.Body.Close()
 	return nil
 }
