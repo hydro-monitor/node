@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,16 +22,8 @@ const (
 	NODE_NAME                      = "1"
 )
 
-//Configure TLS, etc.
-var tr = &http.Transport{
-	TLSClientConfig: &tls.Config{
-		InsecureSkipVerify: true,
-	},
-}
-
 var client = &http.Client{
-	Timeout:   10 * time.Second,
-	Transport: tr,
+	Timeout: 10 * time.Second,
 }
 
 // estados(ID nodo (text),
