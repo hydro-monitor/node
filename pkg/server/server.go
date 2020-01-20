@@ -81,7 +81,7 @@ func GetNodeConfiguration() (*APIConfigutation, error) {
 }
 
 func PostNodeMeasurement(measurement APIMeasurement) error {
-	picturePath := "/home/pi/Documents/pictures/lala" // FIXME Remove to send current image
+	picturePath := measurement.Picture
 
 	file, err := os.Open(picturePath)
 	if err != nil {
