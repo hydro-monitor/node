@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/golang/glog"
+	"github.com/hydro-monitor/node/pkg/server"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -10,14 +12,11 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/golang/glog"
-	"github.com/hydro-monitor/node/pkg/server"
 )
 
 const (
-	postNodeMeasurementUrl = "http://192.168.1.12:8080/api/nodes/%s/readings"
-	NODE_NAME              = "1"
+	postNodeMeasurementUrl = "http://localhost:8080/api/nodes/%s/readings"
+	NODE_NAME              = "lujan-1"
 )
 
 var client = &http.Client{
@@ -33,7 +32,14 @@ func makeReq(uri string, params map[string]string, path string) (*http.Response,
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("Picture", filepath.Base(path))
+	if err := writer.WriteField("timestamp", time.Now().Format(time.RFC3339)); err != nil {
+		return nil, err
+	}
+	if err := writer.WriteField("waterLevel", fmt.Sprintf("%f", 3.14)); err != nil {
+		return nil, err
+	}
+
+	part, err := writer.CreateFormFile("picture", filepath.Base(path))
 	if err != nil {
 		return nil, err
 	}
@@ -41,23 +47,16 @@ func makeReq(uri string, params map[string]string, path string) (*http.Response,
 		return nil, err
 	}
 
-	for key, val := range params {
+	/*for key, val := range params {
 		_ = writer.WriteField(key, val)
-	}
-	//
-	if err := writer.WriteField("time", time.Now().String()); err != nil {
-		return nil, err
-	}
-	if err := writer.WriteField("waterLevel", fmt.Sprintf("%f", 3.14)); err != nil {
-		return nil, err
-	}
-	//
+	}*/
 
 	if err := writer.Close(); err != nil {
 		return nil, err
 	}
-
-	res, err := http.Post(fmt.Sprintf(uri, NODE_NAME), http.DetectContentType(body.Bytes()), body)
+    contentType := writer.FormDataContentType()
+    glog.Info(contentType)
+	res, err := http.Post(fmt.Sprintf(uri, NODE_NAME), contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +68,7 @@ func main() {
 	m := server.APIMeasurement{
 		Time:       time.Now(),
 		WaterLevel: 600,
-		Picture:    "/Users/abarbetta/Desktop/lala.jpg",
+		Picture:    "/Users/mporto/Desktop/maxresdefault.jpg",
 	}
 
 	res, err := makeReq(postNodeMeasurementUrl, nil, m.Picture)
