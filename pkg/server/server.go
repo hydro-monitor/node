@@ -90,13 +90,14 @@ func pictureUploadRequest(uri string, params map[string]string, path string) (*h
 	if err != nil {
 		return nil, err
 	}
-	_, err = io.Copy(part, file)
+	if _, err := io.Copy(part, file); err != nil {
+		return nil, err
+	}
 
 	for key, val := range params {
 		_ = writer.WriteField(key, val)
 	}
-	err = writer.Close()
-	if err != nil {
+	if err := writer.Close(); err != nil {
 		return nil, err
 	}
 
@@ -110,8 +111,8 @@ func pictureUploadRequest(uri string, params map[string]string, path string) (*h
 
 func PostNodeMeasurement(measurement APIMeasurement) error {
 	extraParams := map[string]string{
-		"Time":       measurement.Time.String(),
-		"WaterLevel": fmt.Sprintf("%f", measurement.WaterLevel),
+		"time":       measurement.Time.String(),
+		"waterLevel": fmt.Sprintf("%f", measurement.WaterLevel),
 	}
 	request, err := pictureUploadRequest(postNodeMeasurementUrl, extraParams, measurement.Picture)
 	if err != nil {
