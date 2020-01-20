@@ -6,11 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 const (
@@ -77,52 +80,54 @@ func GetNodeConfiguration() (*APIConfigutation, error) {
 	return &respConfig, err
 }
 
-func pictureUploadRequest(uri string, params map[string]string, path string) (*http.Request, error) {
-	file, err := os.Open(path)
+func PostNodeMeasurement(measurement APIMeasurement) error {
+	picturePath := "/home/pi/Documents/pictures/lala" // FIXME Remove to send current image
+
+	file, err := os.Open(picturePath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("Picture", filepath.Base(path))
+
+	if err := writer.WriteField("timestamp", measurement.Time.Format(time.RFC3339)); err != nil {
+		return err
+	}
+	if err := writer.WriteField("waterLevel", fmt.Sprintf("%f", measurement.WaterLevel)); err != nil {
+		return err
+	}
+
+	part, err := writer.CreateFormFile("picture", filepath.Base(picturePath))
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if _, err := io.Copy(part, file); err != nil {
-		return nil, err
-	}
-
-	for key, val := range params {
-		_ = writer.WriteField(key, val)
+		return err
 	}
 	if err := writer.Close(); err != nil {
-		return nil, err
+		return err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf(uri, NODE_NAME), body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	return req, err
-}
-
-func PostNodeMeasurement(measurement APIMeasurement) error {
-	extraParams := map[string]string{
-		"time":       measurement.Time.String(),
-		"waterLevel": fmt.Sprintf("%f", measurement.WaterLevel),
-	}
-	request, err := pictureUploadRequest(postNodeMeasurementUrl, extraParams, measurement.Picture)
+	contentType := writer.FormDataContentType()
+	res, err := http.Post(fmt.Sprintf(postNodeMeasurementUrl, NODE_NAME), contentType, body)
 	if err != nil {
 		return err
 	}
-	resp, err := client.Do(request)
+
+	/// DEBUG Block FIXME Remove
+	defer res.Body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		glog.Errorf("DEBUG Error reading response body: %v", err)
 		return err
 	}
-	defer resp.Body.Close()
+	bodyString := string(bodyBytes)
+	glog.Infof("DEBUG Status code: %d. Body: %v", res.StatusCode, bodyString)
+	///
+
 	return nil
 }
 
