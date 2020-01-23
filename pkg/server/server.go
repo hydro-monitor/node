@@ -106,18 +106,15 @@ func PostNodeMeasurement(measurement APIMeasurement) error {
 	if err != nil {
 		return err
 	}
-
-	/// DEBUG Block FIXME Remove
 	defer res.Body.Close()
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		glog.Errorf("DEBUG Error reading response body: %v", err)
+		glog.Errorf("Error reading response body for measurement creation: %v", err)
 		return err
 	}
 	bodyString := string(bodyBytes)
-	glog.Infof("DEBUG Status code: %d. Body: %v", res.StatusCode, bodyString)
-	///
+	glog.Infof("Status code for measurement creation: %d. Body: %v", res.StatusCode, bodyString)
 
 	return nil
 }
