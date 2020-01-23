@@ -5,11 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/golang/glog"
 )
 
 const (
@@ -19,7 +22,9 @@ const (
 	NODE_NAME                      = "1"
 )
 
-var client = &http.Client{Timeout: 10 * time.Second}
+var client = &http.Client{
+	Timeout: 10 * time.Second,
+}
 
 // estados(ID nodo (text),
 //         nombre (text),
@@ -66,51 +71,51 @@ func GetNodeConfiguration() (*APIConfigutation, error) {
 	return &respConfig, err
 }
 
-func pictureUploadRequest(uri string, params map[string]string, path string) (*http.Request, error) {
-	file, err := os.Open(path)
+func PostNodeMeasurement(measurement APIMeasurement) error {
+	picturePath := measurement.Picture
+
+	file, err := os.Open(picturePath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("Picture", filepath.Base(path))
-	if err != nil {
-		return nil, err
-	}
-	_, err = io.Copy(part, file)
 
-	for key, val := range params {
-		_ = writer.WriteField(key, val)
+	if err := writer.WriteField("timestamp", measurement.Time.Format(time.RFC3339)); err != nil {
+		return err
 	}
-	err = writer.Close()
-	if err != nil {
-		return nil, err
+	if err := writer.WriteField("waterLevel", fmt.Sprintf("%f", measurement.WaterLevel)); err != nil {
+		return err
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf(uri, NODE_NAME), body)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	return req, err
-}
-
-func PostNodeMeasurement(measurement APIMeasurement) error {
-	extraParams := map[string]string {
-		"Time": measurement.Time.String(),
-		"WaterLevel": fmt.Sprintf("%f", measurement.WaterLevel),
-	}
-	request, err := pictureUploadRequest(postNodeMeasurementUrl, extraParams, measurement.Picture)
+	part, err := writer.CreateFormFile("picture", filepath.Base(picturePath))
 	if err != nil {
 		return err
 	}
-	resp, err := client.Do(request)
+	if _, err := io.Copy(part, file); err != nil {
+		return err
+	}
+	if err := writer.Close(); err != nil {
+		return err
+	}
+
+	contentType := writer.FormDataContentType()
+	res, err := http.Post(fmt.Sprintf(postNodeMeasurementUrl, NODE_NAME), contentType, body)
 	if err != nil {
 		return err
-	} 
-	defer resp.Body.Close()
+	}
+	defer res.Body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		glog.Errorf("Error reading response body for measurement creation: %v", err)
+		return err
+	}
+	bodyString := string(bodyBytes)
+	glog.Infof("Status code for measurement creation: %d. Body: %v", res.StatusCode, bodyString)
+
 	return nil
 }
 
