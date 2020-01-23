@@ -36,8 +36,8 @@ func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.Wai
 	}
 }
 
-func (m *Measurer) takePicture(time time.Time) (string, error) {
-	fileName := fmt.Sprintf("%s/%s", picturesDir, time.String())
+func (m *Measurer) takePicture(ts time.Time) (string, error) {
+	fileName := fmt.Sprintf("%s/%s", picturesDir, ts.String())
 	file, err := os.Create(fileName)
 	if err != nil {
 		glog.Errorf("Error creating file for picture: %v", err)
@@ -46,6 +46,11 @@ func (m *Measurer) takePicture(time time.Time) (string, error) {
 	defer file.Close()
 
 	stillConfig := raspicam.NewStill()
+	stillConfig.Quality = 20
+	//stillConfig.Height =
+	//stillConfig.Width =
+	stillConfig.Preview.Mode = raspicam.PreviewDisabled
+	stillConfig.Timeout = time.Duration(0)
 
 	errCh := make(chan error)
 	var errStr []string
