@@ -1,21 +1,15 @@
 package measurer
 
 import (
-	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/dhowden/raspicam"
 	"github.com/golang/glog"
 
+	"github.com/hydro-monitor/node/pkg/camera"
 	"github.com/hydro-monitor/node/pkg/server"
-)
-
-const (
-	picturesDir = "/home/pi/Documents/pictures"
 )
 
 type Measurer struct {
@@ -36,38 +30,10 @@ func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.Wai
 	}
 }
 
-func (m *Measurer) takePicture(ts time.Time) (string, error) {
-	fileName := fmt.Sprintf("%s/%s", picturesDir, ts.String())
-	file, err := os.Create(fileName)
-	if err != nil {
-		glog.Errorf("Error creating file for picture: %v", err)
-		return "", err
-	}
-	defer file.Close()
-
-	stillConfig := raspicam.NewStill()
-	stillConfig.Quality = 20
-	//stillConfig.Height =
-	//stillConfig.Width =
-	stillConfig.Preview.Mode = raspicam.PreviewDisabled
-	stillConfig.Timeout = time.Duration(500 * time.Millisecond)
-
-	errCh := make(chan error)
-	var errStr []string
-	go func() {
-		for x := range errCh {
-			glog.Errorf("%v\n", x)
-			errStr = append(errStr, x.Error())
-		}
-	}()
-
-	glog.Info("Capturing still with picamera")
-	raspicam.Capture(stillConfig, file, errCh)
-
-	if len(errStr) > 0 {
-		return fileName, fmt.Errorf(strings.Join(errStr, "\n"))
-	}
-	return fileName, nil
+func (m *Measurer) takePicture(time time.Time) (string, error) {
+	c := camera.Camera{}
+	fileName, err := c.TakeStill(time.String())
+	return fileName, err
 }
 
 func (m *Measurer) takeWaterLevelMeasurement() float64 {
