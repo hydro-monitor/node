@@ -1,8 +1,6 @@
 package measurer
 
 import (
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -10,6 +8,7 @@ import (
 
 	"github.com/hydro-monitor/node/pkg/camera"
 	"github.com/hydro-monitor/node/pkg/server"
+	"github.com/hydro-monitor/node/pkg/water"
 )
 
 type Measurer struct {
@@ -17,7 +16,7 @@ type Measurer struct {
 	analyzer_chan chan float64
 	stop_chan     chan int
 	wg            *sync.WaitGroup
-	comm          *ArduinoCommunicator
+	waterLevel    *water.WaterLevel
 }
 
 func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
@@ -26,7 +25,7 @@ func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.Wai
 		analyzer_chan: analyzer_chan,
 		stop_chan:     make(chan int),
 		wg:            wg,
-		comm:          NewArduinoCommunicator(),
+		waterLevel:    water.NewWaterLevel(),
 	}
 }
 
@@ -37,29 +36,8 @@ func (m *Measurer) takePicture(time time.Time) (string, error) {
 }
 
 func (m *Measurer) takeWaterLevelMeasurement() float64 {
-	if err := m.comm.RequestMeasurement(); err != nil {
-		glog.Errorf("Error requesting measurement to Arduino %v", err)
-	}
+	f, _ := m.waterLevel.TakeWaterLevel()
 
-	buffer := make([]byte, 128)
-	n, err := m.comm.ReadMeasurement(buffer)
-	if err != nil {
-		glog.Errorf("Error reading measurement from Arduino %v", err)
-	}
-	/*
-		buffer := make([]byte, 128)
-		buffer[0] = '6'
-		buffer[1] = '5'
-		n := 2
-	*/
-
-	glog.Infof("Measurement received: %q", buffer[:n])
-	str := string(buffer[:n])
-	nStr := strings.TrimRight(str, "\r\n")
-	f, err := strconv.ParseFloat(nStr, 64)
-	if err != nil {
-		glog.Errorf("Failed to convert string '%s' to int: %v", nStr, err)
-	}
 	glog.Infof("Sending measurement %f to analyzer", f)
 	select {
 	case m.analyzer_chan <- f:
