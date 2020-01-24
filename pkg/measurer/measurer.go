@@ -62,7 +62,7 @@ func (m *Measurer) takeMeasurement() {
 		return
 	}
 
-	glog.Infof("Sending measurement %f to server", waterLevel)
+	glog.Infof("Sending measurement (water level: %f and picture) to server", waterLevel)
 	err = server.PostNodeMeasurement(server.APIMeasurement{
 		Time:       time,
 		WaterLevel: waterLevel,
