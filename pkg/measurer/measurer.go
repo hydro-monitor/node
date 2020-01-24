@@ -50,7 +50,7 @@ func (m *Measurer) takePicture(ts time.Time) (string, error) {
 	//stillConfig.Height =
 	//stillConfig.Width =
 	stillConfig.Preview.Mode = raspicam.PreviewDisabled
-	stillConfig.Timeout = time.Duration(0)
+	stillConfig.Timeout = time.Duration(1 * time.Second)
 
 	errCh := make(chan error)
 	var errStr []string
