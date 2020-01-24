@@ -1,21 +1,14 @@
 package measurer
 
 import (
-	"fmt"
-	"os"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/dhowden/raspicam"
 	"github.com/golang/glog"
 
+	"github.com/hydro-monitor/node/pkg/camera"
 	"github.com/hydro-monitor/node/pkg/server"
-)
-
-const (
-	picturesDir = "/home/pi/Documents/pictures"
+	"github.com/hydro-monitor/node/pkg/water"
 )
 
 type Measurer struct {
@@ -23,7 +16,7 @@ type Measurer struct {
 	analyzer_chan chan float64
 	stop_chan     chan int
 	wg            *sync.WaitGroup
-	comm          *ArduinoCommunicator
+	waterLevel    *water.WaterLevel
 }
 
 func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
@@ -32,63 +25,19 @@ func NewMeasurer(trigger_chan chan int, analyzer_chan chan float64, wg *sync.Wai
 		analyzer_chan: analyzer_chan,
 		stop_chan:     make(chan int),
 		wg:            wg,
-		comm:          NewArduinoCommunicator(),
+		waterLevel:    water.NewWaterLevel(),
 	}
 }
 
 func (m *Measurer) takePicture(time time.Time) (string, error) {
-	fileName := fmt.Sprintf("%s/%s", picturesDir, time.String())
-	file, err := os.Create(fileName)
-	if err != nil {
-		glog.Errorf("Error creating file for picture: %v", err)
-		return "", err
-	}
-	defer file.Close()
-
-	stillConfig := raspicam.NewStill()
-
-	errCh := make(chan error)
-	var errStr []string
-	go func() {
-		for x := range errCh {
-			glog.Errorf("%v\n", x)
-			errStr = append(errStr, x.Error())
-		}
-	}()
-
-	glog.Info("Capturing still with picamera")
-	raspicam.Capture(stillConfig, file, errCh)
-
-	if len(errStr) > 0 {
-		return fileName, fmt.Errorf(strings.Join(errStr, "\n"))
-	}
-	return fileName, nil
+	c := camera.Camera{}
+	fileName, err := c.TakeStill(time.String())
+	return fileName, err
 }
 
 func (m *Measurer) takeWaterLevelMeasurement() float64 {
-	if err := m.comm.RequestMeasurement(); err != nil {
-		glog.Errorf("Error requesting measurement to Arduino %v", err)
-	}
+	f, _ := m.waterLevel.TakeWaterLevel()
 
-	buffer := make([]byte, 128)
-	n, err := m.comm.ReadMeasurement(buffer)
-	if err != nil {
-		glog.Errorf("Error reading measurement from Arduino %v", err)
-	}
-	/*
-		buffer := make([]byte, 128)
-		buffer[0] = '6'
-		buffer[1] = '5'
-		n := 2
-	*/
-
-	glog.Infof("Measurement received: %q", buffer[:n])
-	str := string(buffer[:n])
-	nStr := strings.TrimRight(str, "\r\n")
-	f, err := strconv.ParseFloat(nStr, 64)
-	if err != nil {
-		glog.Errorf("Failed to convert string '%s' to int: %v", nStr, err)
-	}
 	glog.Infof("Sending measurement %f to analyzer", f)
 	select {
 	case m.analyzer_chan <- f:
@@ -113,7 +62,7 @@ func (m *Measurer) takeMeasurement() {
 		return
 	}
 
-	glog.Infof("Sending measurement %f to server", waterLevel)
+	glog.Infof("Sending measurement (water level: %f and picture) to server", waterLevel)
 	err = server.PostNodeMeasurement(server.APIMeasurement{
 		Time:       time,
 		WaterLevel: waterLevel,

@@ -1,4 +1,4 @@
-package measurer
+package water
 
 import (
 	"time"
