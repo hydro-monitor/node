@@ -43,7 +43,7 @@ type ConfigWatcher struct {
 	analyzer_chan chan *Configutation
 	stop_chan     chan int
 	timer         *time.Ticker
-	interval      time.Duration // In milliseconds
+	interval      time.Duration // In seconds
 }
 
 func NewConfigWatcher(trigger_chan chan int, analyzer_chan chan *Configutation, interval int, wg *sync.WaitGroup) *ConfigWatcher {

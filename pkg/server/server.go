@@ -18,7 +18,7 @@ import (
 const (
 	getNodeConfigurationUrl        = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
 	postNodeMeasurementUrl         = "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"
-	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/node/%s/requests"
+	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"
 	NODE_NAME                      = "1"
 )
 
@@ -52,7 +52,7 @@ type APIMeasurement struct {
 	Time       time.Time `json:"timestamp"`
 	WaterLevel float64   `json:"waterLevel"`
 	Picture    string    `json:"picture"`
-	//TODO Add when manual measurements are implemented WasManual bool `json:"wasManual"`
+	WasManual  bool      `json:"wasManual"`
 }
 
 type APIMeasurementRequest struct {
