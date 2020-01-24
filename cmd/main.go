@@ -19,7 +19,7 @@ import (
 const (
 	interval                      = 10
 	configurationUpdateInterval   = 60
-	manualMeasurementPollInterval = 180
+	manualMeasurementPollInterval = 5
 )
 
 func init() {
