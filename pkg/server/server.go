@@ -19,7 +19,7 @@ import (
 const (
 	getNodeConfigurationUrl        = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
 	postNodeMeasurementUrl         = "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"
-	postNodePictureUrl             = "http://antiguos.fi.uba.ar:443/api/readings/%s/pictures" // FIXME add node/%s to endpoint
+	postNodePictureUrl             = "http://antiguos.fi.uba.ar:443/api/readings/%s/photos" // FIXME add node/%s to endpoint
 	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"
 	NODE_NAME                      = "1"
 )
