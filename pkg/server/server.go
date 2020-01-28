@@ -19,7 +19,7 @@ import (
 const (
 	getNodeConfigurationUrl        = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
 	postNodeMeasurementUrl         = "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"
-	postNodePictureUrl             = "http://antiguos.fi.uba.ar:443/api/readings/%s/pictures"
+	postNodePictureUrl             = "http://antiguos.fi.uba.ar:443/api/readings/%s/pictures" // FIXME add node/%s to endpoint
 	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"
 	NODE_NAME                      = "1"
 )
@@ -139,7 +139,7 @@ func PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := http.Post(fmt.Sprintf(postNodePictureUrl, NODE_NAME, measurementID), contentType, body)
+	res, err := http.Post(fmt.Sprintf(postNodePictureUrl, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
