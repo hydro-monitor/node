@@ -12,12 +12,14 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/gocql/gocql"
 	"github.com/golang/glog"
 )
 
 const (
 	getNodeConfigurationUrl        = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
 	postNodeMeasurementUrl         = "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"
+	postNodePictureUrl             = "http://antiguos.fi.uba.ar:443/api/readings/%s/photos" // FIXME add node/%s to endpoint
 	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"
 	NODE_NAME                      = "1"
 )
@@ -51,8 +53,18 @@ type APIConfigutation struct {
 type APIMeasurement struct {
 	Time       time.Time `json:"timestamp"`
 	WaterLevel float64   `json:"waterLevel"`
-	Picture    string    `json:"picture"`
 	WasManual  bool      `json:"wasManual"`
+}
+
+type APIMeasurementResponse struct {
+	APIMeasurement `json:",inline"`
+	ReadingID      gocql.UUID `json:"readingId"`
+}
+
+type APIPicture struct {
+	MeasurementID gocql.UUID `json:"measurementId"`
+	Picture       string     `json:"picture"`
+	PictureNumber int        `json:"pictureNumber"`
 }
 
 type APIMeasurementRequest struct {
@@ -71,7 +83,35 @@ func GetNodeConfiguration() (*APIConfigutation, error) {
 	return &respConfig, err
 }
 
-func PostNodeMeasurement(measurement APIMeasurement) error {
+func PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
+	requestByte, _ := json.Marshal(measurement)
+	requestReader := bytes.NewReader(requestByte)
+	res, err := client.Post(fmt.Sprintf(postNodeMeasurementUrl, NODE_NAME), "application/json", requestReader)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		glog.Errorf("Error reading response body for measurement creation: %v", err)
+		return nil, err
+	}
+	bodyString := string(bodyBytes)
+	glog.Infof("Status code for measurement creation: %d. Body: %v", res.StatusCode, bodyString)
+
+	var resObj APIMeasurementResponse
+	if err := json.Unmarshal(bodyBytes, &resObj); err != nil {
+		glog.Errorf("Error unmarshaling body %v", err)
+		return nil, err
+	}
+
+	glog.Infof("Returning measurement ID: %v", &resObj.ReadingID)
+	return &resObj.ReadingID, nil
+}
+
+func PostNodePicture(measurement APIPicture) error {
+	measurementID := measurement.MeasurementID
 	picturePath := measurement.Picture
 
 	file, err := os.Open(picturePath)
@@ -83,10 +123,7 @@ func PostNodeMeasurement(measurement APIMeasurement) error {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	if err := writer.WriteField("timestamp", measurement.Time.Format(time.RFC3339)); err != nil {
-		return err
-	}
-	if err := writer.WriteField("waterLevel", fmt.Sprintf("%f", measurement.WaterLevel)); err != nil {
+	if err := writer.WriteField("pictureNumber", fmt.Sprintf("%d", measurement.PictureNumber)); err != nil {
 		return err
 	}
 
@@ -102,7 +139,7 @@ func PostNodeMeasurement(measurement APIMeasurement) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := http.Post(fmt.Sprintf(postNodeMeasurementUrl, NODE_NAME), contentType, body)
+	res, err := http.Post(fmt.Sprintf(postNodePictureUrl, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
@@ -110,11 +147,11 @@ func PostNodeMeasurement(measurement APIMeasurement) error {
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		glog.Errorf("Error reading response body for measurement creation: %v", err)
+		glog.Errorf("Error reading response body for picture upload: %v", err)
 		return err
 	}
 	bodyString := string(bodyBytes)
-	glog.Infof("Status code for measurement creation: %d. Body: %v", res.StatusCode, bodyString)
+	glog.Infof("Status code for picture upload: %d. Body: %v", res.StatusCode, bodyString)
 
 	return nil
 }

@@ -57,23 +57,35 @@ func (m *Measurer) takeMeasurement(manual bool) {
 	glog.Info("Taking water level")
 	waterLevel := m.takeWaterLevelMeasurement()
 
-	glog.Info("Taking picture")
-	pictureFile, err := m.takePicture(time)
-	if err != nil {
-		glog.Errorf("Error taking picture: %v. Skipping measurement", err)
-		return
-	}
-
 	glog.Infof("Sending measurement (water level: %f and picture) to server", waterLevel)
-	err = server.PostNodeMeasurement(server.APIMeasurement{
+	measurementID, err := server.PostNodeMeasurement(server.APIMeasurement{
 		Time:       time,
 		WaterLevel: waterLevel,
-		Picture:    pictureFile,
 		WasManual:  manual,
 	})
 	if err != nil {
-		glog.Errorf("Error sending measurement %f to server: %v", waterLevel, err)
+		glog.Errorf("Error sending measurement %f to server: %v. Skipping measurement", waterLevel, err)
+		//FIXME What to do here? skip?
+		return
 	}
+
+	glog.Info("Taking picture")
+	go func() {
+		pictureFile, err := m.takePicture(time)
+		if err != nil {
+			glog.Errorf("Error taking picture: %v. Skipping measurement", err)
+			return
+		}
+
+		if err := server.PostNodePicture(server.APIPicture{
+			MeasurementID: *measurementID,
+			Picture:       pictureFile,
+			PictureNumber: 1, // TODO Pending implementation of multiple pictures per measurement
+		}); err != nil {
+			glog.Errorf("Error sending picture to server: %v", err)
+			return
+		}
+	}()
 }
 
 func (m *Measurer) Start() error {
