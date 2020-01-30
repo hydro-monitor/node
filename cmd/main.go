@@ -24,6 +24,12 @@ const (
 
 func init() {
 	flag.Set("logtostderr", "true")
+
+	// Initialize env variables
+	envInitialTriggerInterval := os.Getenv("INITIAL_TRIGGER_INTERVAL")
+	if len(envInitialTriggerInterval) > 0 {
+		initialTriggerInterval = envInitialTriggerInterval
+	}
 }
 
 type node struct {
@@ -46,6 +52,8 @@ func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig, manualMeasurer cha
 }
 
 func main() {
+	glog.Infof("DEBUG initial trigger interval is %s", initialTriggerInterval)
+
 	flag.Parse()
 	var wg sync.WaitGroup
 	wg.Add(5)
