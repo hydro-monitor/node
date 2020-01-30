@@ -14,19 +14,14 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/golang/glog"
-)
 
-const (
-	getNodeConfigurationUrl        = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
-	postNodeMeasurementUrl         = "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"
-	postNodePictureUrl             = "http://antiguos.fi.uba.ar:443/api/readings/%s/photos" // FIXME add node/%s to endpoint
-	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"
-	NODE_NAME                      = "1"
+	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
 var client = &http.Client{
 	Timeout: 10 * time.Second,
 }
+var env = envconfig.New()
 
 // estados(ID nodo (text),
 //         nombre (text),
@@ -72,7 +67,7 @@ type APIMeasurementRequest struct {
 }
 
 func GetNodeConfiguration() (*APIConfigutation, error) {
-	resp, err := client.Get(fmt.Sprintf(getNodeConfigurationUrl, NODE_NAME))
+	resp, err := client.Get(fmt.Sprintf(env.GetNodeConfigurationUrl, env.NodeName))
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +81,7 @@ func GetNodeConfiguration() (*APIConfigutation, error) {
 func PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
 	requestByte, _ := json.Marshal(measurement)
 	requestReader := bytes.NewReader(requestByte)
-	res, err := client.Post(fmt.Sprintf(postNodeMeasurementUrl, NODE_NAME), "application/json", requestReader)
+	res, err := client.Post(fmt.Sprintf(env.PostNodeMeasurementUrl, env.NodeName), "application/json", requestReader)
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +134,7 @@ func PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := http.Post(fmt.Sprintf(postNodePictureUrl, measurementID), contentType, body)
+	res, err := http.Post(fmt.Sprintf(env.PostNodePictureUrl, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
@@ -160,7 +155,7 @@ func PostNodePicture(measurement APIPicture) error {
 // is enough to know a manual measurement was requested.
 // Also, we need another method to DELETE/PUT the manual request and let the server now the measurement was taken
 func GetManualMeasurementRequest() (bool, error) {
-	resp, err := client.Get(fmt.Sprintf(getManualMeasurementRequestUrl, NODE_NAME))
+	resp, err := client.Get(fmt.Sprintf(env.GetManualMeasurementRequestUrl, env.NodeName))
 	if err != nil {
 		return false, err
 	}

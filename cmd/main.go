@@ -8,27 +8,22 @@ import (
 	"syscall"
 
 	"github.com/golang/glog"
+	"github.com/joho/godotenv"
 
 	"github.com/hydro-monitor/node/pkg/analyzer"
 	"github.com/hydro-monitor/node/pkg/config"
+	"github.com/hydro-monitor/node/pkg/envconfig"
 	"github.com/hydro-monitor/node/pkg/manual"
 	"github.com/hydro-monitor/node/pkg/measurer"
 	"github.com/hydro-monitor/node/pkg/trigger"
 )
 
-const (
-	initialTriggerInterval        = 10
-	configurationUpdateInterval   = 60
-	manualMeasurementPollInterval = 180
-)
-
 func init() {
 	flag.Set("logtostderr", "true")
 
-	// Initialize env variables
-	envInitialTriggerInterval := os.Getenv("INITIAL_TRIGGER_INTERVAL")
-	if len(envInitialTriggerInterval) > 0 {
-		initialTriggerInterval = envInitialTriggerInterval
+	// Loads values from .env into the system
+	if err := godotenv.Load(); err != nil {
+		glog.Infof("No .env file found")
 	}
 }
 
@@ -42,18 +37,18 @@ type node struct {
 
 // NewNode creates a new node with all it's correspondant processes
 func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig, manualMeasurer chan int, measurerAnalyzer chan float64, configAnalyzer chan *config.Configutation, wg *sync.WaitGroup) *node {
+	env := envconfig.New()
+
 	return &node{
-		t:  trigger.NewTrigger(initialTriggerInterval, triggerMeasurer, triggerAnalyzer, wg),
+		t:  trigger.NewTrigger(env.InitialTriggerInterval, triggerMeasurer, triggerAnalyzer, wg),
 		m:  measurer.NewMeasurer(triggerMeasurer, manualMeasurer, measurerAnalyzer, wg),
 		a:  analyzer.NewAnalyzer(measurerAnalyzer, triggerAnalyzer, configAnalyzer, wg),
-		cw: config.NewConfigWatcher(triggerConfig, configAnalyzer, configurationUpdateInterval, wg),
-		mt: manual.NewManualMeasurementTrigger(manualMeasurer, manualMeasurementPollInterval, wg),
+		cw: config.NewConfigWatcher(triggerConfig, configAnalyzer, env.ConfigurationUpdateInterval, wg),
+		mt: manual.NewManualMeasurementTrigger(manualMeasurer, env.ManualMeasurementPollInterval, wg),
 	}
 }
 
 func main() {
-	glog.Infof("DEBUG initial trigger interval is %s", initialTriggerInterval)
-
 	flag.Parse()
 	var wg sync.WaitGroup
 	wg.Add(5)

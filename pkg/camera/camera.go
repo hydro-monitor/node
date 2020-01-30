@@ -8,13 +8,20 @@ import (
 
 	"github.com/dhowden/raspicam"
 	"github.com/golang/glog"
+
+	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
-const (
-	picturesDir = "/home/pi/Documents/pictures"
-)
+type Camera struct {
+	picturesDir string
+}
 
-type Camera struct{}
+func NewCamera() *Camera {
+	env := envconfig.New()
+	return &Camera{
+		picturesDir: env.PicturesDir,
+	}
+}
 
 func (c *Camera) getStillConfig() *raspicam.Still {
 	stillConfig := raspicam.NewStill()
@@ -27,7 +34,7 @@ func (c *Camera) getStillConfig() *raspicam.Still {
 }
 
 func (c *Camera) TakeStill(stillName string) (string, error) {
-	fileName := fmt.Sprintf("%s/%s", picturesDir, stillName)
+	fileName := fmt.Sprintf("%s/%s", c.picturesDir, stillName)
 	file, err := os.Create(fileName)
 	if err != nil {
 		glog.Errorf("Error creating file for picture: %v", err)

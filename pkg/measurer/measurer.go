@@ -18,6 +18,7 @@ type Measurer struct {
 	stop_chan     chan int
 	wg            *sync.WaitGroup
 	waterLevel    *water.WaterLevel
+	camera        *camera.Camera
 }
 
 func NewMeasurer(trigger_chan, manual_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
@@ -28,12 +29,12 @@ func NewMeasurer(trigger_chan, manual_chan chan int, analyzer_chan chan float64,
 		stop_chan:     make(chan int),
 		wg:            wg,
 		waterLevel:    water.NewWaterLevel(),
+		camera:        camera.NewCamera(),
 	}
 }
 
 func (m *Measurer) takePicture(time time.Time) (string, error) {
-	c := camera.Camera{}
-	fileName, err := c.TakeStill(time.String())
+	fileName, err := m.camera.TakeStill(time.String())
 	return fileName, err
 }
 
