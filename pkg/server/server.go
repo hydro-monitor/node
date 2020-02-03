@@ -63,7 +63,7 @@ type APIPicture struct {
 }
 
 type APIMeasurementRequest struct {
-	State string `json:"state"`
+	ManualReading bool `json:"manualReading"`
 }
 
 func GetNodeConfiguration() (*APIConfigutation, error) {
@@ -165,7 +165,7 @@ func GetManualMeasurementRequest() (bool, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&respMeasurementReq); err != nil {
 		return false, err
 	}
-	if respMeasurementReq.State == "Pending" {
+	if respMeasurementReq.ManualReading {
 		return true, nil
 	}
 	return false, nil
