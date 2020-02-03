@@ -38,6 +38,7 @@ type node struct {
 // NewNode creates a new node with all it's correspondant processes
 func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig, manualMeasurer chan int, measurerAnalyzer chan float64, configAnalyzer chan *config.Configutation, wg *sync.WaitGroup) *node {
 	env := envconfig.New()
+	glog.Infof("Env config: %v", env)
 
 	return &node{
 		t:  trigger.NewTrigger(env.InitialTriggerInterval, triggerMeasurer, triggerAnalyzer, wg),

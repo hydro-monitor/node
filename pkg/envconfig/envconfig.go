@@ -32,7 +32,7 @@ func New() *Config {
         Baud: getEnvAsInt("BAUD", 9600),
         GetNodeConfigurationUrl: getEnv("GET_NODE_CONFIGURATION_URL", "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s"),
         PostNodeMeasurementUrl: getEnv("POST_NODE_MEASUREMENT_URL", "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"),
-        PostNodePictureUrl: getEnv("POST_NODE_PICTURE_URL", "http://antiguos.fi.uba.ar:443/api/readings/%s/photos"), // FIXME add node/%s to endpoint
+        PostNodePictureUrl: getEnv("POST_NODE_PICTURE_URL", "http://antiguos.fi.uba.ar:443/api/api/nodes/%s/readings/%s/photos"),
         GetManualMeasurementRequestUrl: getEnv("GET_MANUAL_MEASUREMENT_REQUEST_URL", "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"),
 	}
 }

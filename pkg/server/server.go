@@ -134,7 +134,7 @@ func PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := http.Post(fmt.Sprintf(env.PostNodePictureUrl, measurementID), contentType, body)
+	res, err := http.Post(fmt.Sprintf(env.PostNodePictureUrl, env.NodeName, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
