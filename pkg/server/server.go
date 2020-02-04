@@ -14,18 +14,34 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/golang/glog"
+
+	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
-const (
-	getNodeConfigurationUrl        = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s" // TODO Turn consts into env variables
-	postNodeMeasurementUrl         = "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"
-	postNodePictureUrl             = "http://antiguos.fi.uba.ar:443/api/readings/%s/photos" // FIXME add node/%s to endpoint
-	getManualMeasurementRequestUrl = "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"
-	NODE_NAME                      = "1"
-)
+type Server struct {
+	client                         *http.Client
+	nodeName                       string
+	getNodeConfigurationUrl        string
+	postNodeMeasurementUrl         string
+	postNodePictureUrl             string
+	getManualMeasurementRequestUrl string
+}
 
-var client = &http.Client{
-	Timeout: 10 * time.Second,
+func NewServer() *Server {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	env := envconfig.New()
+
+	return &Server{
+		client:                         client,
+		nodeName:                       env.NodeName,
+		getNodeConfigurationUrl:        env.GetNodeConfigurationUrl,
+		postNodeMeasurementUrl:         env.PostNodeMeasurementUrl,
+		postNodePictureUrl:             env.PostNodePictureUrl,
+		getManualMeasurementRequestUrl: env.GetManualMeasurementRequestUrl,
+	}
 }
 
 // estados(ID nodo (text),
@@ -68,11 +84,11 @@ type APIPicture struct {
 }
 
 type APIMeasurementRequest struct {
-	State string `json:"state"`
+	ManualReading bool `json:"manualReading"`
 }
 
-func GetNodeConfiguration() (*APIConfigutation, error) {
-	resp, err := client.Get(fmt.Sprintf(getNodeConfigurationUrl, NODE_NAME))
+func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
+	resp, err := s.client.Get(fmt.Sprintf(s.getNodeConfigurationUrl, s.nodeName))
 	if err != nil {
 		return nil, err
 	}
@@ -83,10 +99,10 @@ func GetNodeConfiguration() (*APIConfigutation, error) {
 	return &respConfig, err
 }
 
-func PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
+func (s *Server) PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
 	requestByte, _ := json.Marshal(measurement)
 	requestReader := bytes.NewReader(requestByte)
-	res, err := client.Post(fmt.Sprintf(postNodeMeasurementUrl, NODE_NAME), "application/json", requestReader)
+	res, err := s.client.Post(fmt.Sprintf(s.postNodeMeasurementUrl, s.nodeName), "application/json", requestReader)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +126,7 @@ func PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
 	return &resObj.ReadingID, nil
 }
 
-func PostNodePicture(measurement APIPicture) error {
+func (s *Server) PostNodePicture(measurement APIPicture) error {
 	measurementID := measurement.MeasurementID
 	picturePath := measurement.Picture
 
@@ -139,7 +155,7 @@ func PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := http.Post(fmt.Sprintf(postNodePictureUrl, measurementID), contentType, body)
+	res, err := http.Post(fmt.Sprintf(s.postNodePictureUrl, s.nodeName, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
@@ -159,8 +175,8 @@ func PostNodePicture(measurement APIPicture) error {
 // TODO Check if request with state is needed or the fact that a request itself exists
 // is enough to know a manual measurement was requested.
 // Also, we need another method to DELETE/PUT the manual request and let the server now the measurement was taken
-func GetManualMeasurementRequest() (bool, error) {
-	resp, err := client.Get(fmt.Sprintf(getManualMeasurementRequestUrl, NODE_NAME))
+func (s *Server) GetManualMeasurementRequest() (bool, error) {
+	resp, err := s.client.Get(fmt.Sprintf(s.getManualMeasurementRequestUrl, s.nodeName))
 	if err != nil {
 		return false, err
 	}
@@ -170,7 +186,7 @@ func GetManualMeasurementRequest() (bool, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&respMeasurementReq); err != nil {
 		return false, err
 	}
-	if respMeasurementReq.State == "Pending" {
+	if respMeasurementReq.ManualReading {
 		return true, nil
 	}
 	return false, nil

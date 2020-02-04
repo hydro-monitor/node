@@ -5,11 +5,8 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/tarm/serial"
-)
 
-const (
-	SERIAL = "/dev/ttyACM0"
-	BAUD   = 9600
+	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
 type ArduinoCommunicator struct {
@@ -17,9 +14,11 @@ type ArduinoCommunicator struct {
 }
 
 func NewArduinoCommunicator() *ArduinoCommunicator {
+	env := envconfig.New()
+
 	c := &serial.Config{
-		Name: SERIAL,
-		Baud: BAUD,
+		Name: env.SerialPort,
+		Baud: env.Baud,
 	}
 	s, err := serial.OpenPort(c)
 	if err != nil {
