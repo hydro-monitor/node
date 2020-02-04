@@ -19,12 +19,12 @@ import (
 )
 
 type Server struct {
-	Client                         *http.Client
-	NodeName                       string
-	GetNodeConfigurationUrl        string
-	PostNodeMeasurementUrl         string
-	PostNodePictureUrl             string
-	GetManualMeasurementRequestUrl string
+	client                         *http.Client
+	nodeName                       string
+	getNodeConfigurationUrl        string
+	postNodeMeasurementUrl         string
+	postNodePictureUrl             string
+	getManualMeasurementRequestUrl string
 }
 
 func NewServer() *Server {
@@ -35,12 +35,12 @@ func NewServer() *Server {
 	env := envconfig.New()
 
 	return &Server{
-		Client:                         client,
-		NodeName:                       env.NodeName,
-		GetNodeConfigurationUrl:        env.GetNodeConfigurationUrl,
-		PostNodeMeasurementUrl:         env.PostNodeMeasurementUrl,
-		PostNodePictureUrl:             env.PostNodePictureUrl,
-		GetManualMeasurementRequestUrl: env.GetManualMeasurementRequestUrl,
+		client:                         client,
+		nodeName:                       env.NodeName,
+		getNodeConfigurationUrl:        env.GetNodeConfigurationUrl,
+		postNodeMeasurementUrl:         env.PostNodeMeasurementUrl,
+		postNodePictureUrl:             env.PostNodePictureUrl,
+		getManualMeasurementRequestUrl: env.GetManualMeasurementRequestUrl,
 	}
 }
 
@@ -88,7 +88,7 @@ type APIMeasurementRequest struct {
 }
 
 func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
-	resp, err := s.Client.Get(fmt.Sprintf(s.GetNodeConfigurationUrl, s.NodeName))
+	resp, err := s.client.Get(fmt.Sprintf(s.getNodeConfigurationUrl, s.nodeName))
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 func (s *Server) PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
 	requestByte, _ := json.Marshal(measurement)
 	requestReader := bytes.NewReader(requestByte)
-	res, err := s.Client.Post(fmt.Sprintf(s.PostNodeMeasurementUrl, s.NodeName), "application/json", requestReader)
+	res, err := s.client.Post(fmt.Sprintf(s.postNodeMeasurementUrl, s.nodeName), "application/json", requestReader)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := http.Post(fmt.Sprintf(s.PostNodePictureUrl, s.NodeName, measurementID), contentType, body)
+	res, err := http.Post(fmt.Sprintf(s.postNodePictureUrl, s.nodeName, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
@@ -176,7 +176,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 // is enough to know a manual measurement was requested.
 // Also, we need another method to DELETE/PUT the manual request and let the server now the measurement was taken
 func (s *Server) GetManualMeasurementRequest() (bool, error) {
-	resp, err := s.Client.Get(fmt.Sprintf(s.GetManualMeasurementRequestUrl, s.NodeName))
+	resp, err := s.client.Get(fmt.Sprintf(s.getManualMeasurementRequestUrl, s.nodeName))
 	if err != nil {
 		return false, err
 	}
