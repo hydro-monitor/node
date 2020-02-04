@@ -19,6 +19,7 @@ type Measurer struct {
 	wg            *sync.WaitGroup
 	waterLevel    *water.WaterLevel
 	camera        *camera.Camera
+	server        *server.Server
 }
 
 func NewMeasurer(trigger_chan, manual_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
@@ -30,6 +31,7 @@ func NewMeasurer(trigger_chan, manual_chan chan int, analyzer_chan chan float64,
 		wg:            wg,
 		waterLevel:    water.NewWaterLevel(),
 		camera:        camera.NewCamera(),
+		server:        server.NewServer(),
 	}
 }
 
@@ -59,7 +61,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 	waterLevel := m.takeWaterLevelMeasurement()
 
 	glog.Infof("Sending measurement (water level: %f and picture) to server", waterLevel)
-	measurementID, err := server.PostNodeMeasurement(server.APIMeasurement{
+	measurementID, err := m.server.PostNodeMeasurement(server.APIMeasurement{
 		Time:       time,
 		WaterLevel: waterLevel,
 		WasManual:  manual,
@@ -78,7 +80,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 			return
 		}
 
-		if err := server.PostNodePicture(server.APIPicture{
+		if err := m.server.PostNodePicture(server.APIPicture{
 			MeasurementID: *measurementID,
 			Picture:       pictureFile,
 			PictureNumber: 1, // TODO Pending implementation of multiple pictures per measurement

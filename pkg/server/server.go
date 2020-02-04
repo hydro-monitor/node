@@ -18,10 +18,31 @@ import (
 	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
-var client = &http.Client{
-	Timeout: 10 * time.Second,
+type Server struct {
+	Client                         *http.Client
+	NodeName                       string
+	GetNodeConfigurationUrl        string
+	PostNodeMeasurementUrl         string
+	PostNodePictureUrl             string
+	GetManualMeasurementRequestUrl string
 }
-var env = envconfig.New()
+
+func NewServer() *Server {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	env := envconfig.New()
+
+	return &Server{
+		Client:                         client,
+		NodeName:                       env.NodeName,
+		GetNodeConfigurationUrl:        env.GetNodeConfigurationUrl,
+		PostNodeMeasurementUrl:         env.PostNodeMeasurementUrl,
+		PostNodePictureUrl:             env.PostNodePictureUrl,
+		GetManualMeasurementRequestUrl: env.GetManualMeasurementRequestUrl,
+	}
+}
 
 // estados(ID nodo (text),
 //         nombre (text),
@@ -66,8 +87,8 @@ type APIMeasurementRequest struct {
 	ManualReading bool `json:"manualReading"`
 }
 
-func GetNodeConfiguration() (*APIConfigutation, error) {
-	resp, err := client.Get(fmt.Sprintf(env.GetNodeConfigurationUrl, env.NodeName))
+func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
+	resp, err := s.Client.Get(fmt.Sprintf(s.GetNodeConfigurationUrl, s.NodeName))
 	if err != nil {
 		return nil, err
 	}
@@ -78,10 +99,10 @@ func GetNodeConfiguration() (*APIConfigutation, error) {
 	return &respConfig, err
 }
 
-func PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
+func (s *Server) PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
 	requestByte, _ := json.Marshal(measurement)
 	requestReader := bytes.NewReader(requestByte)
-	res, err := client.Post(fmt.Sprintf(env.PostNodeMeasurementUrl, env.NodeName), "application/json", requestReader)
+	res, err := s.Client.Post(fmt.Sprintf(s.PostNodeMeasurementUrl, s.NodeName), "application/json", requestReader)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +126,7 @@ func PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
 	return &resObj.ReadingID, nil
 }
 
-func PostNodePicture(measurement APIPicture) error {
+func (s *Server) PostNodePicture(measurement APIPicture) error {
 	measurementID := measurement.MeasurementID
 	picturePath := measurement.Picture
 
@@ -134,7 +155,7 @@ func PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	url := fmt.Sprintf(env.PostNodePictureUrl, env.NodeName, measurementID)
+	url := fmt.Sprintf(s.PostNodePictureUrl, s.NodeName, measurementID)
 	glog.Infof("Posting to usrl %s", url)
 	res, err := http.Post(url, contentType, body)
 	if err != nil {
@@ -156,8 +177,8 @@ func PostNodePicture(measurement APIPicture) error {
 // TODO Check if request with state is needed or the fact that a request itself exists
 // is enough to know a manual measurement was requested.
 // Also, we need another method to DELETE/PUT the manual request and let the server now the measurement was taken
-func GetManualMeasurementRequest() (bool, error) {
-	resp, err := client.Get(fmt.Sprintf(env.GetManualMeasurementRequestUrl, env.NodeName))
+func (s *Server) GetManualMeasurementRequest() (bool, error) {
+	resp, err := s.Client.Get(fmt.Sprintf(s.GetManualMeasurementRequestUrl, s.NodeName))
 	if err != nil {
 		return false, err
 	}

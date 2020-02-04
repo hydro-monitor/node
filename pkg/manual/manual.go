@@ -15,6 +15,7 @@ type ManualMeasurementTrigger struct {
 	wg            *sync.WaitGroup
 	timer         *time.Ticker
 	interval      time.Duration // In seconds
+	server        *server.Server
 }
 
 func NewManualMeasurementTrigger(measurer_chan chan int, interval int, wg *sync.WaitGroup) *ManualMeasurementTrigger {
@@ -23,11 +24,12 @@ func NewManualMeasurementTrigger(measurer_chan chan int, interval int, wg *sync.
 		stop_chan:     make(chan int),
 		wg:            wg,
 		interval:      time.Duration(interval),
+		server:        server.NewServer(),
 	}
 }
 
 func (m *ManualMeasurementTrigger) sendManualMeasurementRequestIfAny() error {
-	pending, err := server.GetManualMeasurementRequest()
+	pending, err := m.server.GetManualMeasurementRequest()
 	if err != nil {
 		glog.Errorf("Could not get manual measurement request from server: %v", err)
 		return err
