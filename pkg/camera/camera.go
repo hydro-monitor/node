@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dhowden/raspicam"
@@ -13,6 +14,7 @@ import (
 )
 
 type Camera struct {
+	sync.Mutex
 	picturesDir string
 }
 
@@ -34,6 +36,10 @@ func (c *Camera) getStillConfig() *raspicam.Still {
 }
 
 func (c *Camera) TakeStill(stillName string) (string, error) {
+	glog.Info("TAKING CAMERA LOCK")
+	c.Lock()
+	glog.Info("TOOK CAMERA LOCK")
+	defer c.Unlock()
 	fileName := fmt.Sprintf("%s/%s", c.picturesDir, stillName)
 	file, err := os.Create(fileName)
 	if err != nil {
