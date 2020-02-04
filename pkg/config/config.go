@@ -44,6 +44,7 @@ type ConfigWatcher struct {
 	stop_chan     chan int
 	timer         *time.Ticker
 	interval      time.Duration // In seconds
+	server        *server.Server
 }
 
 func NewConfigWatcher(trigger_chan chan int, analyzer_chan chan *Configutation, interval int, wg *sync.WaitGroup) *ConfigWatcher {
@@ -53,12 +54,13 @@ func NewConfigWatcher(trigger_chan chan int, analyzer_chan chan *Configutation, 
 		analyzer_chan: analyzer_chan,
 		stop_chan:     make(chan int),
 		interval:      time.Duration(interval),
+		server:        server.NewServer(),
 	}
 	return c
 }
 
 func (c *ConfigWatcher) updateConfiguration() error {
-	serverConfig, err := server.GetNodeConfiguration()
+	serverConfig, err := c.server.GetNodeConfiguration()
 	if err != nil {
 		glog.Errorf("Could not get configuration from server: %v", err)
 		return err
