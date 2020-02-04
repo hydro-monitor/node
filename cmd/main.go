@@ -40,6 +40,9 @@ func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig, manualMeasurer cha
 	env := envconfig.New()
 	glog.Infof("Env config: %v", env)
 
+	env = envconfig.New()
+	glog.Infof("Env config 2: %v", env)
+
 	return &node{
 		t:  trigger.NewTrigger(env.InitialTriggerInterval, triggerMeasurer, triggerAnalyzer, wg),
 		m:  measurer.NewMeasurer(triggerMeasurer, manualMeasurer, measurerAnalyzer, wg),
@@ -69,6 +72,9 @@ func main() {
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	env := envconfig.New()
+	glog.Infof("Env config 3: %v", env)
 
 	glog.Info("Awaiting signal")
 	sig := <-sigs
