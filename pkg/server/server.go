@@ -155,9 +155,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	url := fmt.Sprintf(s.PostNodePictureUrl, s.NodeName, measurementID)
-	glog.Infof("Posting to usrl %s", url)
-	res, err := http.Post(url, contentType, body)
+	res, err := http.Post(fmt.Sprintf(s.PostNodePictureUrl, s.NodeName, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
