@@ -7,31 +7,35 @@ import (
 	"github.com/golang/glog"
 
 	"github.com/hydro-monitor/node/pkg/camera"
+	"github.com/hydro-monitor/node/pkg/envconfig"
 	"github.com/hydro-monitor/node/pkg/server"
 	"github.com/hydro-monitor/node/pkg/water"
 )
 
 type Measurer struct {
-	trigger_chan  chan int
-	manual_chan   chan int
-	analyzer_chan chan float64
-	stop_chan     chan int
-	wg            *sync.WaitGroup
-	waterLevel    *water.WaterLevel
-	camera        *camera.Camera
-	server        *server.Server
+	trigger_chan                     chan int
+	manual_chan                      chan int
+	analyzer_chan                    chan float64
+	stop_chan                        chan int
+	wg                               *sync.WaitGroup
+	waterLevel                       *water.WaterLevel
+	camera                           *camera.Camera
+	server                           *server.Server
+	measurementToAnalyzerSendTimeout time.Duration
 }
 
 func NewMeasurer(trigger_chan, manual_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
+	env := envconfig.New()
 	return &Measurer{
-		trigger_chan:  trigger_chan,
-		analyzer_chan: analyzer_chan,
-		manual_chan:   manual_chan,
-		stop_chan:     make(chan int),
-		wg:            wg,
-		waterLevel:    water.NewWaterLevel(),
-		camera:        camera.NewCamera(),
-		server:        server.NewServer(),
+		trigger_chan:                     trigger_chan,
+		analyzer_chan:                    analyzer_chan,
+		manual_chan:                      manual_chan,
+		stop_chan:                        make(chan int),
+		wg:                               wg,
+		waterLevel:                       water.NewWaterLevel(),
+		camera:                           camera.NewCamera(),
+		server:                           server.NewServer(),
+		measurementToAnalyzerSendTimeout: time.Duration(env.MeasurementToAnalyzerSendTimeout) * time.Second,
 	}
 }
 
@@ -47,7 +51,7 @@ func (m *Measurer) takeWaterLevelMeasurement() float64 {
 	select {
 	case m.analyzer_chan <- f:
 		glog.Info("Measurement sent")
-	case <-time.After(10 * time.Second):
+	case <-time.After(m.measurementToAnalyzerSendTimeout):
 		glog.Warning("Measurement send timed out")
 	}
 

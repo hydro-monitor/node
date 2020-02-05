@@ -7,6 +7,7 @@ import (
 
 	"github.com/golang/glog"
 
+	"github.com/hydro-monitor/node/pkg/envconfig"
 	"github.com/hydro-monitor/node/pkg/server"
 )
 
@@ -38,23 +39,26 @@ func (c *Configutation) GetState(stateName string) server.State {
 
 // Continuously polls the servers for the right configuration of the node
 type ConfigWatcher struct {
-	wg            *sync.WaitGroup
-	trigger_chan  chan int
-	analyzer_chan chan *Configutation
-	stop_chan     chan int
-	timer         *time.Ticker
-	interval      time.Duration // In seconds
-	server        *server.Server
+	wg                         *sync.WaitGroup
+	trigger_chan               chan int
+	analyzer_chan              chan *Configutation
+	stop_chan                  chan int
+	timer                      *time.Ticker
+	interval                   time.Duration // In seconds
+	server                     *server.Server
+	configurationUpdateTimeout time.Duration
 }
 
 func NewConfigWatcher(trigger_chan chan int, analyzer_chan chan *Configutation, interval int, wg *sync.WaitGroup) *ConfigWatcher {
+	env := envconfig.New()
 	c := &ConfigWatcher{
-		wg:            wg,
-		trigger_chan:  trigger_chan,
-		analyzer_chan: analyzer_chan,
-		stop_chan:     make(chan int),
-		interval:      time.Duration(interval),
-		server:        server.NewServer(),
+		wg:                         wg,
+		trigger_chan:               trigger_chan,
+		analyzer_chan:              analyzer_chan,
+		stop_chan:                  make(chan int),
+		interval:                   time.Duration(interval),
+		server:                     server.NewServer(),
+		configurationUpdateTimeout: time.Duration(env.ConfigurationUpdateTimeout) * time.Second,
 	}
 	return c
 }
@@ -71,7 +75,7 @@ func (c *ConfigWatcher) updateConfiguration() error {
 	case c.analyzer_chan <- config:
 		glog.Info("Configuration update sent")
 		return nil
-	case <-time.After(10 * time.Second):
+	case <-time.After(c.configurationUpdateTimeout):
 		glog.Warning("Configuration update timed out")
 		return fmt.Errorf("Configuration update timed out")
 	}

@@ -6,25 +6,29 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/hydro-monitor/node/pkg/envconfig"
 	"github.com/hydro-monitor/node/pkg/server"
 )
 
 type ManualMeasurementTrigger struct {
-	measurer_chan chan int
-	stop_chan     chan int
-	wg            *sync.WaitGroup
-	timer         *time.Ticker
-	interval      time.Duration // In seconds
-	server        *server.Server
+	measurer_chan                       chan int
+	stop_chan                           chan int
+	wg                                  *sync.WaitGroup
+	timer                               *time.Ticker
+	interval                            time.Duration // In seconds
+	server                              *server.Server
+	manualMeasurementRequestSendTimeout time.Duration
 }
 
 func NewManualMeasurementTrigger(measurer_chan chan int, interval int, wg *sync.WaitGroup) *ManualMeasurementTrigger {
+	env := envconfig.New()
 	return &ManualMeasurementTrigger{
-		measurer_chan: measurer_chan,
-		stop_chan:     make(chan int),
-		wg:            wg,
-		interval:      time.Duration(interval),
-		server:        server.NewServer(),
+		measurer_chan:                       measurer_chan,
+		stop_chan:                           make(chan int),
+		wg:                                  wg,
+		interval:                            time.Duration(interval),
+		server:                              server.NewServer(),
+		manualMeasurementRequestSendTimeout: time.Duration(env.ManualMeasurementRequestSendTimeout) * time.Second,
 	}
 }
 
@@ -40,7 +44,7 @@ func (m *ManualMeasurementTrigger) sendManualMeasurementRequestIfAny() error {
 		case m.measurer_chan <- 1:
 			glog.Info("Manual measurement request sent")
 			return nil
-		case <-time.After(10 * time.Second):
+		case <-time.After(m.manualMeasurementRequestSendTimeout):
 			glog.Warning("Manual measurement request send timed out")
 			return fmt.Errorf("Manual measurement request send timed out")
 		}

@@ -7,16 +7,18 @@ import (
 
 	"github.com/golang/glog"
 	"github.com/hydro-monitor/node/pkg/config"
+	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
 type Analyzer struct {
-	wg                  *sync.WaitGroup
-	trigger_chan        chan int
-	measurer_chan       chan float64
-	config_watcher_chan chan *config.Configutation
-	stop_chan           chan int
-	config              *config.Configutation
-	currentState        string
+	wg                    *sync.WaitGroup
+	trigger_chan          chan int
+	measurer_chan         chan float64
+	config_watcher_chan   chan *config.Configutation
+	stop_chan             chan int
+	config                *config.Configutation
+	currentState          string
+	intervalUpdateTimeout time.Duration
 }
 
 func (a *Analyzer) updateConfiguration(newConfig *config.Configutation) error {
@@ -26,12 +28,14 @@ func (a *Analyzer) updateConfiguration(newConfig *config.Configutation) error {
 }
 
 func NewAnalyzer(measurer_chan chan float64, trigger_chan chan int, config_watcher_chan chan *config.Configutation, wg *sync.WaitGroup) *Analyzer {
+	env := envconfig.New()
 	a := &Analyzer{
-		wg:                  wg,
-		trigger_chan:        trigger_chan,
-		measurer_chan:       measurer_chan,
-		config_watcher_chan: config_watcher_chan,
-		stop_chan:           make(chan int),
+		wg:                    wg,
+		trigger_chan:          trigger_chan,
+		measurer_chan:         measurer_chan,
+		config_watcher_chan:   config_watcher_chan,
+		stop_chan:             make(chan int),
+		intervalUpdateTimeout: time.Duration(env.IntervalUpdateTimeout) * time.Second,
 	}
 	return a
 }
@@ -55,7 +59,7 @@ func (a *Analyzer) updateCurrentState(newStateName string) {
 	select {
 	case a.trigger_chan <- newInterval:
 		glog.Info("Interval update sent")
-	case <-time.After(10 * time.Second):
+	case <-time.After(a.intervalUpdateTimeout):
 		glog.Warning("Interval update timed out")
 	}
 }
