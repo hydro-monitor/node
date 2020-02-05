@@ -7,33 +7,41 @@ import (
 )
 
 type Config struct {
-	NodeName                       string
-	InitialTriggerInterval         int
-	ConfigurationUpdateInterval    int
-	ManualMeasurementPollInterval  int
-	PicturesDir                    string
-	SerialPort                     string
-	Baud                           int
-	GetNodeConfigurationUrl        string
-	PostNodeMeasurementUrl         string
-	PostNodePictureUrl             string
-	GetManualMeasurementRequestUrl string
+	NodeName                            string
+	InitialTriggerInterval              int
+	ConfigurationUpdateInterval         int
+	ManualMeasurementPollInterval       int
+	PicturesDir                         string
+	SerialPort                          string
+	Baud                                int
+	GetNodeConfigurationURL             string
+	PostNodeMeasurementURL              string
+	PostNodePictureURL                  string
+	GetManualMeasurementRequestURL      string
+	IntervalUpdateTimeout               int
+	ConfigurationUpdateTimeout          int
+	ManualMeasurementRequestSendTimeout int
+	MeasurementToAnalyzerSendTimeout    int
 }
 
 // New returns a new Config struct
 func New() *Config {
 	return &Config{
-		NodeName:                       getEnv("NODE_NAME", "1"),
-		InitialTriggerInterval:         getEnvAsInt("INITIAL_TRIGGER_INTERVAL", 10),
-		ConfigurationUpdateInterval:    getEnvAsInt("CONFIGURATION_UPDATE_INTERVAL", 60),
-		ManualMeasurementPollInterval:  getEnvAsInt("MANUAL_MEASUREMENT_POLL_INTERVAL", 180),
-		PicturesDir:                    getEnv("PICTURES_DIR", "/home/pi/Documents/pictures"),
-		SerialPort:                     getEnv("SERIAL_PORT", "/dev/ttyACM0"),
-		Baud:                           getEnvAsInt("BAUD", 9600),
-		GetNodeConfigurationUrl:        getEnv("GET_NODE_CONFIGURATION_URL", "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s"),
-		PostNodeMeasurementUrl:         getEnv("POST_NODE_MEASUREMENT_URL", "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"),
-		PostNodePictureUrl:             getEnv("POST_NODE_PICTURE_URL", "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings/%s/photos"),
-		GetManualMeasurementRequestUrl: getEnv("GET_MANUAL_MEASUREMENT_REQUEST_URL", "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"),
+		NodeName:                            getEnv("NODE_NAME", "1"),
+		InitialTriggerInterval:              getEnvAsInt("INITIAL_TRIGGER_INTERVAL", 10),
+		ConfigurationUpdateInterval:         getEnvAsInt("CONFIGURATION_UPDATE_INTERVAL", 60),
+		ManualMeasurementPollInterval:       getEnvAsInt("MANUAL_MEASUREMENT_POLL_INTERVAL", 180),
+		PicturesDir:                         getEnv("PICTURES_DIR", "/home/pi/Documents/pictures"),
+		SerialPort:                          getEnv("SERIAL_PORT", "/dev/ttyACM0"),
+		Baud:                                getEnvAsInt("BAUD", 9600),
+		GetNodeConfigurationURL:             getEnv("GET_NODE_CONFIGURATION_URL", "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s"),
+		PostNodeMeasurementURL:              getEnv("POST_NODE_MEASUREMENT_URL", "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"),
+		PostNodePictureURL:                  getEnv("POST_NODE_PICTURE_URL", "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings/%s/photos"),
+		GetManualMeasurementRequestURL:      getEnv("GET_MANUAL_MEASUREMENT_REQUEST_URL", "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"),
+		IntervalUpdateTimeout:               getEnvAsInt("INTERVAL_UPDATE_TIMEOUT", 10),
+		ConfigurationUpdateTimeout:          getEnvAsInt("CONFIGURATION_UPDATE_TIMEOUT", 10),
+		ManualMeasurementRequestSendTimeout: getEnvAsInt("MANUAL_MEASUREMENT_REQUEST_SEND_TIMEOUT", 10),
+		MeasurementToAnalyzerSendTimeout:    getEnvAsInt("MEASUREMENT_TO_ANALYZER_SEND_TIMEOUT", 10),
 	}
 }
 
