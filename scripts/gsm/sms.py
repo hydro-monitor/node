@@ -45,7 +45,7 @@ time.sleep(1)
 
 # Sending a message to a particular Number
 
-port.write('AT+CMGS="+5491161893273"'+'\r\n')
+port.write('AT+CMGS="+5491161004695"'+'\r\n')
 rcv = port.read(10)
 print rcv
 time.sleep(1)
