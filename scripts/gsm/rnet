@@ -5,7 +5,7 @@ connect "/usr/sbin/chat -v -f /etc/chatscripts/gprs -T wap.gprs.unifon.com.ar"
 /dev/ttyS0
 
 # Baudrate
-19200
+115200
 
 # Assumes that your IP address is allocated dynamically by the ISP.
 noipdefault
