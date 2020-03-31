@@ -96,6 +96,7 @@ func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 
 	respConfig := APIConfigutation{}
 	err = json.NewDecoder(resp.Body).Decode(&respConfig)
+	glog.Infof("respConfig: %v", respConfig) // FIXME remove
 	return &respConfig, err
 }
 
