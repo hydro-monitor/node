@@ -105,9 +105,12 @@ func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 	bodyString := string(bodyBytes)
 	glog.Infof("body: %v", bodyString) // FIXME remove
 	*/
-	respConfig := APIConfigutation{}
-	err = json.NewDecoder(resp.Body).Decode(&respConfig)
-	glog.Infof("respConfig: %v", respConfig) // FIXME remove
+	statesMap := make(map[string]State)
+	err = json.NewDecoder(resp.Body).Decode(&statesMap)
+	glog.Infof("respConfig: %v", statesMap) // FIXME remove
+	respConfig := APIConfigutation{
+		States: statesMap,
+	}
 	return &respConfig, err
 }
 
