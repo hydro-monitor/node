@@ -88,26 +88,14 @@ type APIMeasurementRequest struct {
 }
 
 func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
-	url := fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName)
-	glog.Infof("url: %v", url) // FIXME remove
-	resp, err := s.client.Get(url)
+	resp, err := s.client.Get(fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	/*
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		glog.Errorf("Error reading response body for measurement creation: %v", err)
-		return nil, err
-	}
-	bodyString := string(bodyBytes)
-	glog.Infof("body: %v", bodyString) // FIXME remove
-	*/
 	statesMap := make(map[string]State)
 	err = json.NewDecoder(resp.Body).Decode(&statesMap)
-	glog.Infof("respConfig: %v", statesMap) // FIXME remove
 	respConfig := APIConfigutation{
 		States: statesMap,
 	}
