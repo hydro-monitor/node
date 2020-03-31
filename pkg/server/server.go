@@ -88,7 +88,9 @@ type APIMeasurementRequest struct {
 }
 
 func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
-	resp, err := s.client.Get(fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName))
+	url := fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName)
+	glog.Infof("url: %v", url) // FIXME remove
+	resp, err := s.client.Get(url)
 	if err != nil {
 		return nil, err
 	}
