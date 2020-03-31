@@ -98,7 +98,13 @@ func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 
 	respConfig := APIConfigutation{}
 	err = json.NewDecoder(resp.Body).Decode(&respConfig)
-	glog.Infof("body: %v, respConfig: %v", resp.Body, respConfig) // FIXME remove
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		glog.Errorf("Error reading response body for measurement creation: %v", err)
+		return nil, err
+	}
+	bodyString := string(bodyBytes)
+	glog.Infof("body: %v, respConfig: %v", bodyString, respConfig) // FIXME remove
 	return &respConfig, err
 }
 
