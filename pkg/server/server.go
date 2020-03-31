@@ -63,7 +63,7 @@ type State struct {
 }
 
 type APIConfigutation struct {
-	States map[string]State `json:"states"`
+	States []State `json:"states"`
 }
 
 type APIMeasurement struct {
