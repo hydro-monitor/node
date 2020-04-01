@@ -83,6 +83,8 @@ func (c *ConfigWatcher) updateConfiguration() error {
 
 func (c *ConfigWatcher) Start() error {
 	defer c.wg.Done()
+	glog.Infof("Quering server for node configuration.")
+	c.updateConfiguration()
 	c.timer = time.NewTicker(c.interval * time.Second)
 	for {
 		select {
