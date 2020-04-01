@@ -73,11 +73,11 @@ func (c *ConfigWatcher) updateConfiguration() error {
 	glog.Infof("Sending new node configuration: %v", config)
 	select {
 	case c.analyzer_chan <- config:
-		glog.Info("Configuration update sent")
+		glog.Info("Current configuration sent")
 		return nil
 	case <-time.After(c.configurationUpdateTimeout):
-		glog.Warning("Configuration update timed out")
-		return fmt.Errorf("Configuration update timed out")
+		glog.Warning("Configuration send timed out")
+		return fmt.Errorf("Configuration send timed out")
 	}
 }
 

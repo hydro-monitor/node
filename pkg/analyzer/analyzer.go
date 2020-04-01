@@ -22,7 +22,7 @@ type Analyzer struct {
 }
 
 func (a *Analyzer) updateConfiguration(newConfig *config.Configutation) error {
-	glog.Info("Updating node configuration")
+	glog.Info("Saving node configuration")
 	a.config = newConfig
 	return nil
 }
