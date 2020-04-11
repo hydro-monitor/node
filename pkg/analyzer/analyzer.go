@@ -22,7 +22,7 @@ type Analyzer struct {
 }
 
 func (a *Analyzer) updateConfiguration(newConfig *config.Configutation) error {
-	glog.Info("Updating node configuration")
+	glog.Info("Saving node configuration")
 	a.config = newConfig
 	return nil
 }
@@ -73,6 +73,8 @@ func (a *Analyzer) analyze(measurement float64) {
 			return
 		} else {
 			a.updateCurrentState(currentStateName)
+			glog.Infof("Current state (%s) set successfuly. Measurement analysis done", currentStateName)
+			return
 		}
 	}
 	if measurement > a.config.GetState(a.currentState).UpperLimit { // TODO Deal with measurements equal to limits
@@ -81,7 +83,10 @@ func (a *Analyzer) analyze(measurement float64) {
 	} else if measurement < a.config.GetState(a.currentState).LowerLimit {
 		glog.Info("Lower limit surpassed")
 		a.updateCurrentState(a.config.GetState(a.currentState).Prev)
+	} else {
+		glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
 	}
+	glog.Info("Measurement analysis done")
 }
 
 func (a *Analyzer) Start() error {

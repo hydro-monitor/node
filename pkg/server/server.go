@@ -63,7 +63,7 @@ type State struct {
 }
 
 type APIConfigutation struct {
-	States map[string]State `json:"states"`
+	States map[string]State `json:"states,inline"`
 }
 
 type APIMeasurement struct {
@@ -94,8 +94,15 @@ func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 	}
 	defer resp.Body.Close()
 
-	respConfig := APIConfigutation{}
-	err = json.NewDecoder(resp.Body).Decode(&respConfig)
+	if resp.StatusCode == 404 {
+		return nil, fmt.Errorf("Node has no configuration loaded")
+	}
+
+	statesMap := make(map[string]State)
+	err = json.NewDecoder(resp.Body).Decode(&statesMap)
+	respConfig := APIConfigutation{
+		States: statesMap,
+	}
 	return &respConfig, err
 }
 
