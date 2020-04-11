@@ -73,6 +73,8 @@ func (a *Analyzer) analyze(measurement float64) {
 			return
 		} else {
 			a.updateCurrentState(currentStateName)
+			glog.Infof("Current state (%s) set successfuly. Measurement analysis done", currentStateName)
+			return
 		}
 	}
 	if measurement > a.config.GetState(a.currentState).UpperLimit { // TODO Deal with measurements equal to limits
