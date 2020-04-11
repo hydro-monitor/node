@@ -1,6 +1,5 @@
 #include <NewPing.h>            // Biblioteca para sensor ultrasonico HC-SR04
 
-#define SENSOR_DISTANCE 600     // Altura a la cual se encuentra el sensor, medida desde el fondo del río
 #define MAX_DISTANCE 400        // Máxima distancia que puede medir el sensor expresada en cm
 #define ITERACIONES 5           // Cantidad de iteraciones para el promediado de datos
 
@@ -44,15 +43,15 @@ void loop() {
      
         // Calculo del nivel detectado en base a una verificación de 2 de 3
         if (distancia_sensor_1 == distancia_sensor_2) {
-            nivel = SENSOR_DISTANCE - distancia_sensor_1;
+            nivel = distancia_sensor_1;
             Serial.println(nivel);
             return;
         } else if (distancia_sensor_1 == distancia_sensor_3) {
-            nivel = SENSOR_DISTANCE - distancia_sensor_1;
+            nivel = distancia_sensor_1;
             Serial.println(nivel);
             return;
         } else if (distancia_sensor_2 == distancia_sensor_3) {
-            nivel = SENSOR_DISTANCE - distancia_sensor_2;
+            nivel = distancia_sensor_2;
             Serial.println(nivel);
             return;
         }

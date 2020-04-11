@@ -5,15 +5,20 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+
+	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
 type WaterLevel struct {
 	comm *ArduinoCommunicator
+	sensorDistance float64
 }
 
 func NewWaterLevel() *WaterLevel {
+	env := envconfig.New()
 	return &WaterLevel{
 		comm: NewArduinoCommunicator(),
+		sensorDistance: float64(env.WaterSensorDistance),
 	}
 }
 
@@ -30,10 +35,11 @@ func (w *WaterLevel) TakeWaterLevel() (float64, error) {
 		return -1, err
 	}
 	/*
-		buffer := make([]byte, 128) FIXME Remove mock measurement
-		buffer[0] = '6'
-		buffer[1] = '5'
-		n := 2
+	buffer := make([]byte, 128) // FIXME Remove mock measurement
+	buffer[0] = '6'
+	buffer[1] = '5'
+	
+	n := 2
 	*/
 
 	glog.Infof("Measurement received: %q", buffer[:n])
@@ -45,5 +51,9 @@ func (w *WaterLevel) TakeWaterLevel() (float64, error) {
 		return -1, err
 	}
 
-	return f, nil
+	glog.Infof("Substracting measurement from sensor distance: %f - %f", w.sensorDistance, f)
+	level := w.sensorDistance - f
+	glog.Infof("Resulting water level: %f", level)
+
+	return level, nil
 }
