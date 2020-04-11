@@ -24,7 +24,7 @@ type PhotoCleaner struct {
 func NewPhotoCleaner(interval int, wg *sync.WaitGroup) *PhotoCleaner {
 	env := envconfig.New()
 	return &PhotoCleaner{
-		interval:    time.Duration(interval), // TODO make it hours * time.Hour,
+		interval:    time.Duration(interval) * time.Hour,
 		picturesDir: env.PicturesDir,
 		stop_chan:   make(chan int),
 		wg:          wg,
@@ -51,7 +51,7 @@ func (pc *PhotoCleaner) photoNameToTime(photoName string) (*time.Time, error) {
 func (pc *PhotoCleaner) sweepPicturesDir() {
 	files, err := ioutil.ReadDir(pc.picturesDir)
 	if err != nil {
-		glog.Errorf("Cannot read pictures directory %s. Skipping photo cleanup", pc.picturesDir)
+		glog.Errorf("Cannot read pictures directory '%s'. Skipping photo cleanup", pc.picturesDir)
 	}
 
 	now := time.Now()
@@ -61,11 +61,11 @@ func (pc *PhotoCleaner) sweepPicturesDir() {
 		photoName := f.Name()
 		timeOfPhoto, err := pc.photoNameToTime(photoName)
 		if err != nil {
-			glog.Errorf("Error parsing photo name %s to string: %v. Skipping this file", photoName, err)
+			glog.Errorf("Error parsing photo name '%s' to string: %v. Skipping this file", photoName, err)
 			continue
 		}
 		if !pc.inTimeSpan(aWeekAgo, now, *timeOfPhoto) {
-			glog.Infof("Deleting photo %s", photoName)
+			glog.Infof("Deleting photo '%s'", photoName)
 			if err := os.Remove(fmt.Sprintf("%s/%s", pc.picturesDir, photoName)); err != nil {
 				glog.Errorf("Error deleting photo %s: %v", photoName, err)
 			}
