@@ -52,7 +52,7 @@ func (w *WaterLevel) TakeWaterLevel() (float64, error) {
 
 	glog.Infof("Substracting measurement from sensor distance: %f - %f", w.sensorDistance, f)
 	level := w.sensorDistance - f
-	glog.Infof("Resulting water level: %f", w.sensorDistance, f)
+	glog.Infof("Resulting water level: %f", level)
 
 	return level, nil
 }
