@@ -12,7 +12,6 @@ test:
 	go vet github.com/hydro-monitor/node/pkg/...
 
 node:
-	# TODO Add flags CGO_ENABLED=0 GOOS=linux
 	go build -o _output/node ./cmd
 
 image-node:
