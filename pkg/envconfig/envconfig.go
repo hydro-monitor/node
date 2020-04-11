@@ -13,6 +13,7 @@ type Config struct {
 	InitialTriggerInterval              int
 	ConfigurationUpdateInterval         int
 	ManualMeasurementPollInterval       int
+	PhotoCleaningInterval               int
 	PicturesDir                         string
 	SerialPort                          string
 	Baud                                int
@@ -34,6 +35,7 @@ func New() *Config {
 		InitialTriggerInterval:              getEnvAsInt("INITIAL_TRIGGER_INTERVAL", 10),
 		ConfigurationUpdateInterval:         getEnvAsInt("CONFIGURATION_UPDATE_INTERVAL", 60),
 		ManualMeasurementPollInterval:       getEnvAsInt("MANUAL_MEASUREMENT_POLL_INTERVAL", 180),
+		PhotoCleaningInterval:               getEnvAsInt("PHOTO_CLEANING_INTERVAL", 72),
 		PicturesDir:                         getEnv("PICTURES_DIR", "/home/pi/Documents/pictures"),
 		SerialPort:                          getEnv("SERIAL_PORT", "/dev/ttyACM0"),
 		Baud:                                getEnvAsInt("BAUD", 9600),

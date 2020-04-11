@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/hydro-monitor/node/pkg/analyzer"
+	"github.com/hydro-monitor/node/pkg/photocleaner"
 	"github.com/hydro-monitor/node/pkg/config"
 	"github.com/hydro-monitor/node/pkg/envconfig"
 	"github.com/hydro-monitor/node/pkg/manual"
@@ -33,6 +34,7 @@ type node struct {
 	a  *analyzer.Analyzer
 	cw *config.ConfigWatcher
 	mt *manual.ManualMeasurementTrigger
+	pc *photocleaner.PhotoCleaner
 }
 
 // NewNode creates a new node with all it's correspondant processes
@@ -46,13 +48,14 @@ func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig, manualMeasurer cha
 		a:  analyzer.NewAnalyzer(measurerAnalyzer, triggerAnalyzer, configAnalyzer, wg),
 		cw: config.NewConfigWatcher(triggerConfig, configAnalyzer, env.ConfigurationUpdateInterval, wg),
 		mt: manual.NewManualMeasurementTrigger(manualMeasurer, env.ManualMeasurementPollInterval, wg),
+		pc: photocleaner.NewPhotoCleaner(env.PhotoCleaningInterval, wg),
 	}
 }
 
 func main() {
 	flag.Parse()
 	var wg sync.WaitGroup
-	wg.Add(5)
+	wg.Add(6)
 	triggerMeasurer := make(chan int)
 	triggerAnalyzer := make(chan int)
 	measurerAnalyzer := make(chan float64)
@@ -66,6 +69,7 @@ func main() {
 	go n.t.Start()
 	go n.cw.Start()
 	go n.mt.Start()
+	go n.pc.Start()
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -79,6 +83,7 @@ func main() {
 	n.a.Stop()
 	n.cw.Stop()
 	n.mt.Stop()
+	n.pc.Stop()
 
 	wg.Wait()
 }
