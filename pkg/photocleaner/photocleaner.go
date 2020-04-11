@@ -24,7 +24,7 @@ type PhotoCleaner struct {
 func NewPhotoCleaner(interval int, wg *sync.WaitGroup) *PhotoCleaner {
 	env := envconfig.New()
 	return &PhotoCleaner{
-		interval:    time.Duration(interval) * time.Hour,
+		interval:    time.Duration(interval), // TODO make it hours * time.Hour,
 		picturesDir: env.PicturesDir,
 		stop_chan:   make(chan int),
 		wg:          wg,
