@@ -28,18 +28,19 @@ func (w *WaterLevel) TakeWaterLevel() (float64, error) {
 		return -1, err
 	}
 
-	/*
 	buffer := make([]byte, 128)
 	n, err := w.comm.ReadMeasurement(buffer)
 	if err != nil {
 		glog.Errorf("Error reading measurement from Arduino %v", err)
 		return -1, err
 	}
-	*/
-	buffer := make([]byte, 128) //FIXME Remove mock measurement
+	/*
+	buffer := make([]byte, 128) // FIXME Remove mock measurement
 	buffer[0] = '6'
 	buffer[1] = '5'
+	
 	n := 2
+	*/
 
 	glog.Infof("Measurement received: %q", buffer[:n])
 	str := string(buffer[:n])
