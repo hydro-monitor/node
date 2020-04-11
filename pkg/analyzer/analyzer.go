@@ -42,8 +42,8 @@ func NewAnalyzer(measurer_chan chan float64, trigger_chan chan int, config_watch
 
 func (a *Analyzer) lookForCurrentState(measurement float64) (string, error) {
 	for _, stateName := range a.config.GetStates() {
-		// TODO Deal with measurements equal to limits
-		if measurement > a.config.GetState(stateName).LowerLimit && measurement < a.config.GetState(stateName).UpperLimit {
+		// By design, if measurement is equal to lower limit, it is covered by the state
+		if measurement >= a.config.GetState(stateName).LowerLimit && measurement < a.config.GetState(stateName).UpperLimit {
 			return stateName, nil
 		}
 	}
@@ -77,7 +77,8 @@ func (a *Analyzer) analyze(measurement float64) {
 			return
 		}
 	}
-	if measurement > a.config.GetState(a.currentState).UpperLimit { // TODO Deal with measurements equal to limits
+	// By design, if measurement is equal to lower limit, it is covered by the state 
+	if measurement >= a.config.GetState(a.currentState).UpperLimit {
 		glog.Info("Upper limit surpassed")
 		a.updateCurrentState(a.config.GetState(a.currentState).Next)
 	} else if measurement < a.config.GetState(a.currentState).LowerLimit {
