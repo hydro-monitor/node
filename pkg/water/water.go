@@ -5,15 +5,20 @@ import (
 	"strings"
 
 	"github.com/golang/glog"
+
+	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
 type WaterLevel struct {
 	comm *ArduinoCommunicator
+	sensorDistance float64
 }
 
 func NewWaterLevel() *WaterLevel {
+	env := envconfig.New()
 	return &WaterLevel{
 		comm: NewArduinoCommunicator(),
+		sensorDistance: float64(env.WaterSensorDistance),
 	}
 }
 
@@ -45,5 +50,9 @@ func (w *WaterLevel) TakeWaterLevel() (float64, error) {
 		return -1, err
 	}
 
-	return f, nil
+	glog.Infof("Substracting measurement from sensor distance: %d - %d", w.sensorDistance, f)
+	level := w.sensorDistance - f
+	glog.Infof("Resulting water level: %d", w.sensorDistance, f)
+
+	return level, nil
 }

@@ -8,6 +8,8 @@ import (
 
 type Config struct {
 	NodeName                            string
+	// Altura a la cual se encuentra el sensor, medida desde el fondo del río
+	WaterSensorDistance                 int
 	InitialTriggerInterval              int
 	ConfigurationUpdateInterval         int
 	ManualMeasurementPollInterval       int
@@ -28,6 +30,7 @@ type Config struct {
 func New() *Config {
 	return &Config{
 		NodeName:                            getEnv("NODE_NAME", "1"),
+		WaterSensorDistance:                 getEnvAsInt("WATER_SENSOR_DISTANCE", 600),
 		InitialTriggerInterval:              getEnvAsInt("INITIAL_TRIGGER_INTERVAL", 10),
 		ConfigurationUpdateInterval:         getEnvAsInt("CONFIGURATION_UPDATE_INTERVAL", 60),
 		ManualMeasurementPollInterval:       getEnvAsInt("MANUAL_MEASUREMENT_POLL_INTERVAL", 180),
