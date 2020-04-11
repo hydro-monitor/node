@@ -82,7 +82,7 @@ func (a *Analyzer) analyze(measurement float64) {
 		glog.Info("Lower limit surpassed")
 		a.updateCurrentState(a.config.GetState(a.currentState).Prev)
 	} else {
-		glog.Info("No limits were surpassed. Current state is (still) %s", a.currentState)
+		glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
 	}
 	glog.Info("Measurement analysis done")
 }
