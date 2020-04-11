@@ -179,9 +179,6 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 	return nil
 }
 
-// TODO Check if request with state is needed or the fact that a request itself exists
-// is enough to know a manual measurement was requested.
-// Also, we need another method to DELETE/PUT the manual request and let the server now the measurement was taken
 func (s *Server) GetManualMeasurementRequest() (bool, error) {
 	resp, err := s.client.Get(fmt.Sprintf(s.getManualMeasurementRequestURL, s.nodeName))
 	if err != nil {

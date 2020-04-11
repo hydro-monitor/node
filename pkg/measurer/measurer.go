@@ -72,7 +72,6 @@ func (m *Measurer) takeMeasurement(manual bool) {
 	})
 	if err != nil {
 		glog.Errorf("Error sending measurement %f to server: %v. Skipping measurement", waterLevel, err)
-		//FIXME What to do here? skip?
 		return
 	}
 

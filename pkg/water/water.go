@@ -35,7 +35,7 @@ func (w *WaterLevel) TakeWaterLevel() (float64, error) {
 		return -1, err
 	}
 	/*
-	buffer := make([]byte, 128) // FIXME Remove mock measurement
+	buffer := make([]byte, 128) // TODO Remove mock measurement
 	buffer[0] = '6'
 	buffer[1] = '5'
 	
