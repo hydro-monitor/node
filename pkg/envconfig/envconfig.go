@@ -6,28 +6,49 @@ import (
 	"strings"
 )
 
+// Config represents the config for the node
 type Config struct {
+	// Nombre del nodo
 	NodeName                            string
 	// Altura a la cual se encuentra el sensor, medida desde el fondo del río
 	WaterSensorDistance                 int
+	// Intervalo inicial entre toma de mediciones. Es el intervalo de tiempo en segundos 
+	// entre cada toma de medición hasta cargar la configuración del nodo presente en el servidor
 	InitialTriggerInterval              int
+	// Intervalo entre chequeo de actualización de configuración. Es el intervalo de tiempo
+	// en segundos entre cada chequeo de actualización de configuración del nodo.
 	ConfigurationUpdateInterval         int
+	// Intervalo entre chequeo de pedido de medición manual. Es el intervalo de tiempo en segundos
+	// entre cada chequeo de pedido de medición manual.
 	ManualMeasurementPollInterval       int
+	// Intervalo entre limpieza de fotos de picturesDir. Es el intervalo de tiempo en horas
+	// entre cada limpieza de fotos de picturesDir.
 	PhotoCleaningInterval               int
+	// Directorio donde se guardan las fotos tomadas por la cámara
 	PicturesDir                         string
+	// Puerto serie de Arduino
 	SerialPort                          string
+	// Baud rate de Arduino
 	Baud                                int
+	// URL para obtener configuración de nodo
 	GetNodeConfigurationURL             string
+	// URL para crear medición
 	PostNodeMeasurementURL              string
+	// URL para subir foto de una medición
 	PostNodePictureURL                  string
+	// URL para obtener pedido de medición manual
 	GetManualMeasurementRequestURL      string
+	// Timeout para actualización de intervalo de toma de mediciones
 	IntervalUpdateTimeout               int
+	// Timeout para actualización de configuración de nodo
 	ConfigurationUpdateTimeout          int
+	// Timeout para pedido de medición manual
 	ManualMeasurementRequestSendTimeout int
+	// Timeout de envío de nueva medición para analizar 
 	MeasurementToAnalyzerSendTimeout    int
 }
 
-// New returns a new Config struct
+// New returns a new Config struct loading variables from .env and using defaults for the values not present
 func New() *Config {
 	return &Config{
 		NodeName:                            getEnv("NODE_NAME", "1"),

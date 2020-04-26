@@ -9,11 +9,13 @@ import (
 	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
+// WaterLevel represents a water level measurer module
 type WaterLevel struct {
 	comm *ArduinoCommunicator
 	sensorDistance float64
 }
 
+// NewWaterLevel creates and returns a new water level module taking sensorDistance from envconfig
 func NewWaterLevel() *WaterLevel {
 	env := envconfig.New()
 	return &WaterLevel{
@@ -22,6 +24,8 @@ func NewWaterLevel() *WaterLevel {
 	}
 }
 
+// TakeWaterLevel requests a new measurement, reads it, and returns the water level 
+// after substracting it from sensorDistance
 func (w *WaterLevel) TakeWaterLevel() (float64, error) {
 	if err := w.comm.RequestMeasurement(); err != nil {
 		glog.Errorf("Error requesting measurement to Arduino %v", err)

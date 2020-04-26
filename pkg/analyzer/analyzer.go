@@ -10,6 +10,7 @@ import (
 	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
+// Analyzer represents a measurement analyzer
 type Analyzer struct {
 	wg                    *sync.WaitGroup
 	trigger_chan          chan int
@@ -21,12 +22,14 @@ type Analyzer struct {
 	intervalUpdateTimeout time.Duration
 }
 
+// updateConfiguration saves new node configuration
 func (a *Analyzer) updateConfiguration(newConfig *config.Configutation) error {
 	glog.Info("Saving node configuration")
 	a.config = newConfig
 	return nil
 }
 
+// NewAnalyzer creates and returns a new analyzer
 func NewAnalyzer(measurer_chan chan float64, trigger_chan chan int, config_watcher_chan chan *config.Configutation, wg *sync.WaitGroup) *Analyzer {
 	env := envconfig.New()
 	a := &Analyzer{
@@ -40,6 +43,8 @@ func NewAnalyzer(measurer_chan chan float64, trigger_chan chan int, config_watch
 	return a
 }
 
+// lookForCurrentState receives a measurement and checks limits from configuration states in order to identify current node state.
+// Returns current node state name.
 func (a *Analyzer) lookForCurrentState(measurement float64) (string, error) {
 	for _, stateName := range a.config.GetStates() {
 		// By design, if measurement is equal to lower limit, it is covered by the state
@@ -51,6 +56,7 @@ func (a *Analyzer) lookForCurrentState(measurement float64) (string, error) {
 	return "", fmt.Errorf("Could not found current state for measurement %f", measurement)
 }
 
+// updateCurrentState saves new state name and sends new interval to measurement trigger process
 func (a *Analyzer) updateCurrentState(newStateName string) {
 	glog.Infof("New current state is %s", newStateName)
 	a.currentState = newStateName
@@ -64,6 +70,10 @@ func (a *Analyzer) updateCurrentState(newStateName string) {
 	}
 }
 
+// analyze receives a measurement and checks if it is still within the limits of the current state. 
+// If not, it issues a state update.
+// If current state is not set, it looks for it in the current node configuration. 
+// If no current state is found analysis is skipped.
 func (a *Analyzer) analyze(measurement float64) {
 	glog.Info("Analyzing measurement")
 	if a.currentState == "" {
@@ -90,6 +100,7 @@ func (a *Analyzer) analyze(measurement float64) {
 	glog.Info("Measurement analysis done")
 }
 
+// Start starts analyzer process. Exits when stop is received
 func (a *Analyzer) Start() error {
 	defer a.wg.Done()
 	for {
@@ -111,6 +122,7 @@ func (a *Analyzer) Start() error {
 	}
 }
 
+// Stop stops analyzer process
 func (a *Analyzer) Stop() error {
 	glog.Info("Sending stop sign")
 	a.stop_chan <- 1

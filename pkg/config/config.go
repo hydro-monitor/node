@@ -11,12 +11,13 @@ import (
 	"github.com/hydro-monitor/node/pkg/server"
 )
 
-// Map with all posible states in the node configuration.
+// Configutation is a map with all posible states in the node configuration
 type Configutation struct {
 	stateNames []string
 	states     map[string]server.State
 }
 
+// NewConfiguration creates and returns a configuration with all its states
 func NewConfiguration(states map[string]server.State) (c *Configutation) {
 	stateNames := []string{}
 	for k := range states {
@@ -29,15 +30,17 @@ func NewConfiguration(states map[string]server.State) (c *Configutation) {
 	}
 }
 
+// GetStates returns an array with the state names
 func (c *Configutation) GetStates() []string {
 	return c.stateNames
 }
 
+// GetState recerives a state name, returns the state struct
 func (c *Configutation) GetState(stateName string) server.State {
 	return c.states[stateName]
 }
 
-// Continuously polls the servers for the right configuration of the node
+// ConfigWatcher continuously polls the servers for the right configuration of the node
 type ConfigWatcher struct {
 	wg                         *sync.WaitGroup
 	trigger_chan               chan int
@@ -49,6 +52,7 @@ type ConfigWatcher struct {
 	configurationUpdateTimeout time.Duration
 }
 
+// NewConfigWatcher creates and returns a new config watcher
 func NewConfigWatcher(trigger_chan chan int, analyzer_chan chan *Configutation, interval int, wg *sync.WaitGroup) *ConfigWatcher {
 	env := envconfig.New()
 	c := &ConfigWatcher{
@@ -63,6 +67,8 @@ func NewConfigWatcher(trigger_chan chan int, analyzer_chan chan *Configutation, 
 	return c
 }
 
+// updateConfiguration gets node configuration from hydro monitor server.
+// Sends configuration update to analyzer process
 func (c *ConfigWatcher) updateConfiguration() error {
 	serverConfig, err := c.server.GetNodeConfiguration()
 	if err != nil {
@@ -81,6 +87,7 @@ func (c *ConfigWatcher) updateConfiguration() error {
 	}
 }
 
+// Start starts config watcher process. Exits when stop is received
 func (c *ConfigWatcher) Start() error {
 	defer c.wg.Done()
 	glog.Infof("Quering server for node configuration.")
@@ -98,6 +105,7 @@ func (c *ConfigWatcher) Start() error {
 	}
 }
 
+// Stop stops config watcher process
 func (c *ConfigWatcher) Stop() error {
 	c.timer.Stop()
 	glog.Info("Timer stopped")

@@ -7,6 +7,7 @@ import (
 	"github.com/golang/glog"
 )
 
+// Trigger represents a measurement trigger
 type Trigger struct {
 	timer         *time.Ticker
 	interval      time.Duration // In seconds
@@ -16,6 +17,7 @@ type Trigger struct {
 	wg            *sync.WaitGroup
 }
 
+// NewTrigger creates and returns a new measurement trigger
 func NewTrigger(interval int, measurer_chan chan int, analyzer_chan chan int, wg *sync.WaitGroup) *Trigger {
 	return &Trigger{
 		interval:      time.Duration(interval),
@@ -26,6 +28,7 @@ func NewTrigger(interval int, measurer_chan chan int, analyzer_chan chan int, wg
 	}
 }
 
+// Start starts measurement trigger process. Exits when stop is received
 func (t *Trigger) Start() error {
 	t.timer = time.NewTicker(t.interval * time.Second)
 	for {
@@ -46,6 +49,7 @@ func (t *Trigger) Start() error {
 	}
 }
 
+// Stop stops measurement trigger process
 func (t *Trigger) Stop() error {
 	t.timer.Stop()
 	glog.Info("Timer stopped")

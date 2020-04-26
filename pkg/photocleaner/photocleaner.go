@@ -1,18 +1,19 @@
 package photocleaner
 
 import (
-	"sync"
 	"fmt"
-	"strings"
-	"os"
-	"time"
 	"io/ioutil"
+	"os"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/golang/glog"
 
 	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
+// PhotoCleaner represents a photo cleaner
 type PhotoCleaner struct {
 	timer       *time.Ticker
 	interval    time.Duration // In hours
@@ -21,6 +22,7 @@ type PhotoCleaner struct {
 	wg          *sync.WaitGroup
 }
 
+// NewPhotoCleaner creates and returns new photo cleaner
 func NewPhotoCleaner(interval int, wg *sync.WaitGroup) *PhotoCleaner {
 	env := envconfig.New()
 	return &PhotoCleaner{
@@ -31,10 +33,12 @@ func NewPhotoCleaner(interval int, wg *sync.WaitGroup) *PhotoCleaner {
 	}
 }
 
+// inTimeSpan returns true if check time is after start and before end time
 func (pc *PhotoCleaner) inTimeSpan(start, end, check time.Time) bool {
     return check.After(start) && check.Before(end)
 }
 
+// photoNameToTime turns photo name to photo creation timestamp
 func (pc *PhotoCleaner) photoNameToTime(photoName string) (*time.Time, error) {
 	parts := strings.Split(photoName, " ")
 	timeStr := strings.Join(parts[0:len(parts)-1], " ")
@@ -48,6 +52,7 @@ func (pc *PhotoCleaner) photoNameToTime(photoName string) (*time.Time, error) {
 	return &t, nil
 }
 
+// sweepPicturesDir iterates through files in picturesDir. Deletes pictures older than a week
 func (pc *PhotoCleaner) sweepPicturesDir() {
 	files, err := ioutil.ReadDir(pc.picturesDir)
 	if err != nil {
@@ -73,6 +78,7 @@ func (pc *PhotoCleaner) sweepPicturesDir() {
 	}
 }
 
+// Start starts photo cleaner process. Exits when stop is received
 func (pc *PhotoCleaner) Start() error {
 	pc.timer = time.NewTicker(pc.interval * time.Second)
 	for {
@@ -87,6 +93,7 @@ func (pc *PhotoCleaner) Start() error {
 	}
 }
 
+// Stop stops photo cleaner process
 func (pc *PhotoCleaner) Stop() error {
 	pc.timer.Stop()
 	glog.Info("Timer stopped")
