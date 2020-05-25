@@ -10,6 +10,7 @@ import (
 	"github.com/hydro-monitor/node/pkg/server"
 )
 
+// ManualMeasurementTrigger represents a manual measurement trigger
 type ManualMeasurementTrigger struct {
 	measurer_chan                       chan int
 	stop_chan                           chan int
@@ -20,6 +21,7 @@ type ManualMeasurementTrigger struct {
 	manualMeasurementRequestSendTimeout time.Duration
 }
 
+// NewManualMeasurementTrigger creates and returns a new manual measurement trigger
 func NewManualMeasurementTrigger(measurer_chan chan int, interval int, wg *sync.WaitGroup) *ManualMeasurementTrigger {
 	env := envconfig.New()
 	return &ManualMeasurementTrigger{
@@ -32,6 +34,8 @@ func NewManualMeasurementTrigger(measurer_chan chan int, interval int, wg *sync.
 	}
 }
 
+// sendManualMeasurementRequestIfAny checks on hydro monitor server if manual measurement is pending. 
+// If pending, requests new measurement to measurer process.
 func (m *ManualMeasurementTrigger) sendManualMeasurementRequestIfAny() error {
 	pending, err := m.server.GetManualMeasurementRequest()
 	if err != nil {
@@ -53,6 +57,7 @@ func (m *ManualMeasurementTrigger) sendManualMeasurementRequestIfAny() error {
 	return nil
 }
 
+// Start starts manual measurement trigger process. Exits when stop is received
 func (m *ManualMeasurementTrigger) Start() error {
 	defer m.wg.Done()
 	m.timer = time.NewTicker(m.interval * time.Second)
@@ -68,6 +73,7 @@ func (m *ManualMeasurementTrigger) Start() error {
 	}
 }
 
+// Stop stops manual measurement trigger process
 func (m *ManualMeasurementTrigger) Stop() error {
 	m.timer.Stop()
 	glog.Info("Timer stopped")

@@ -11,11 +11,11 @@ import (
 	"github.com/joho/godotenv"
 
 	"github.com/hydro-monitor/node/pkg/analyzer"
-	"github.com/hydro-monitor/node/pkg/photocleaner"
 	"github.com/hydro-monitor/node/pkg/config"
 	"github.com/hydro-monitor/node/pkg/envconfig"
 	"github.com/hydro-monitor/node/pkg/manual"
 	"github.com/hydro-monitor/node/pkg/measurer"
+	"github.com/hydro-monitor/node/pkg/photocleaner"
 	"github.com/hydro-monitor/node/pkg/trigger"
 )
 
@@ -28,6 +28,7 @@ func init() {
 	}
 }
 
+// node represents a hydro monitor node with all it's correspondant processes
 type node struct {
 	t  *trigger.Trigger
 	m  *measurer.Measurer
@@ -37,7 +38,7 @@ type node struct {
 	pc *photocleaner.PhotoCleaner
 }
 
-// NewNode creates a new node with all it's correspondant processes
+// NewNode creates and returns a new node with all it's correspondant processes
 func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig, manualMeasurer chan int, measurerAnalyzer chan float64, configAnalyzer chan *config.Configutation, wg *sync.WaitGroup) *node {
 	env := envconfig.New()
 	glog.Infof("Env config: %v", env)
@@ -52,6 +53,11 @@ func newNode(triggerMeasurer, triggerAnalyzer, triggerConfig, manualMeasurer cha
 	}
 }
 
+// main function creates all the channels needed for inter process communication, a waitgroup 
+// hat matches the amount of processes, and a new node.
+// Node's processes are started and a channel is created to wait for SIGINT and SIGTERM signals. 
+// If any of these signals are received, all node processes are commanded to stop.
+// main waits for all node processes to exit gracefully and then returns.
 func main() {
 	flag.Parse()
 	var wg sync.WaitGroup

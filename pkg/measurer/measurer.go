@@ -12,6 +12,7 @@ import (
 	"github.com/hydro-monitor/node/pkg/water"
 )
 
+// Measurer represents a measurer
 type Measurer struct {
 	trigger_chan                     chan int
 	manual_chan                      chan int
@@ -24,6 +25,7 @@ type Measurer struct {
 	measurementToAnalyzerSendTimeout time.Duration
 }
 
+// NewMeasurer creates and returns a new measurer
 func NewMeasurer(trigger_chan, manual_chan chan int, analyzer_chan chan float64, wg *sync.WaitGroup) *Measurer {
 	env := envconfig.New()
 	return &Measurer{
@@ -39,11 +41,13 @@ func NewMeasurer(trigger_chan, manual_chan chan int, analyzer_chan chan float64,
 	}
 }
 
+// takePicture takes a new picture with camera. Uses time as picture name
 func (m *Measurer) takePicture(time time.Time) (string, error) {
 	fileName, err := m.camera.TakeStill(time.String())
 	return fileName, err
 }
 
+// takeWaterLevelMeasurement takes water level with water level module
 func (m *Measurer) takeWaterLevelMeasurement() float64 {
 	f, _ := m.waterLevel.TakeWaterLevel()
 
@@ -58,6 +62,8 @@ func (m *Measurer) takeWaterLevelMeasurement() float64 {
 	return f
 }
 
+// takeMeasurement takes water level, sends water measurement to server. 
+// Takes picture and uploads picture to new server measurement.
 func (m *Measurer) takeMeasurement(manual bool) {
 	time := time.Now()
 
@@ -94,6 +100,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 	}()
 }
 
+// Start starts measurer process. Exits when stop is received
 func (m *Measurer) Start() error {
 	defer m.wg.Done()
 	for {
@@ -111,6 +118,7 @@ func (m *Measurer) Start() error {
 	}
 }
 
+// Stop stops measurer process
 func (m *Measurer) Stop() error {
 	glog.Info("Sending stop sign")
 	m.stop_chan <- 1

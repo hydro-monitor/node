@@ -18,6 +18,7 @@ import (
 	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
+// Server represents a server for a specific node
 type Server struct {
 	client                         *http.Client
 	nodeName                       string
@@ -27,6 +28,7 @@ type Server struct {
 	getManualMeasurementRequestURL string
 }
 
+// NewServer creates and returns a server taking nodeName and urls from env config
 func NewServer() *Server {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -44,49 +46,62 @@ func NewServer() *Server {
 	}
 }
 
-// estados(ID nodo (text),
-//         nombre (text),
-//         cantidad de fotos a tomar por medición (int),
-//         cada cuantos ms tiempo toma medición (int),
-//         límite de nivel de agua para pasar al estado anterior (float),
-//         límite de nivel de agua para pasar al estado siguiente (float),
-//         nombre estado anterior (text),
-//         nombre estado siguiente (text))
+// State represents a state of a configuration
 type State struct {
+	// State name
+	// Nombre del estado
 	Name        string
+	// Time interval between measurements in seconds
+	// Intervalo de tiempo entre mediciones en segundos
 	Interval    int
+	// Minimum water level limit to be in this state
+	// Límite de nivel de agua para pasar al estado anterior
 	UpperLimit  float64
+	// Maximum water level to be in this state
+	// Límite de nivel de agua para pasar al estado siguiente
 	LowerLimit  float64
+	// Amount of pictures taken per measurement
+	// Cantidad de fotos tomadas por medición
 	PicturesNum int
+	// Name of next state
+	// Nombre del estado siguiente
 	Next        string // State name (key)
+	// Name of previous state
+	// Nombre del estado anterior
 	Prev        string // State name (key)
 }
 
+// APIConfigutation represents a node configuration response from the hydro monitor server
 type APIConfigutation struct {
 	States map[string]State `json:"states,inline"`
 }
 
+// APIMeasurement represents a measurement creation request for the hydro monitor server
 type APIMeasurement struct {
 	Time       time.Time `json:"timestamp"`
 	WaterLevel float64   `json:"waterLevel"`
 	WasManual  bool      `json:"wasManual"`
 }
 
+// APIMeasurementResponse represents a measurement creation response from the hydro monitor server
 type APIMeasurementResponse struct {
 	APIMeasurement `json:",inline"`
 	ReadingID      gocql.UUID `json:"readingId"`
 }
 
+// APIPicture represents a picture creation request for the hydro monitor server
 type APIPicture struct {
 	MeasurementID gocql.UUID `json:"measurementId"`
 	Picture       string     `json:"picture"`
 	PictureNumber int        `json:"pictureNumber"`
 }
 
+// APIMeasurementRequest represents a manual measurement request response from the hydro monitor server
 type APIMeasurementRequest struct {
 	ManualReading bool `json:"manualReading"`
 }
 
+// GetNodeConfiguration returns node configuration from hydro monitor server
 func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 	resp, err := s.client.Get(fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName))
 	if err != nil {
@@ -106,6 +121,7 @@ func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 	return &respConfig, err
 }
 
+// PostNodeMeasurement sends new measurement to hydro monitor server
 func (s *Server) PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
 	requestByte, _ := json.Marshal(measurement)
 	requestReader := bytes.NewReader(requestByte)
@@ -133,6 +149,7 @@ func (s *Server) PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, e
 	return &resObj.ReadingID, nil
 }
 
+// PostNodePicture sends new measurement picture to hydro monitor server
 func (s *Server) PostNodePicture(measurement APIPicture) error {
 	measurementID := measurement.MeasurementID
 	picturePath := measurement.Picture
@@ -179,6 +196,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 	return nil
 }
 
+// GetManualMeasurementRequest returns true if manual measurement is requested
 func (s *Server) GetManualMeasurementRequest() (bool, error) {
 	resp, err := s.client.Get(fmt.Sprintf(s.getManualMeasurementRequestURL, s.nodeName))
 	if err != nil {

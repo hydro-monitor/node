@@ -9,10 +9,13 @@ import (
 	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
+// ArduinoCommunicator represents an Arduino communicator 
 type ArduinoCommunicator struct {
 	port *serial.Port
 }
 
+// NewArduinoCommunicator creates and returns a new Arduino communicator taking serial port and baud rate from envconfig.
+// Opens the serial port and waits for Arduino to boot.
 func NewArduinoCommunicator() *ArduinoCommunicator {
 	env := envconfig.New()
 
@@ -35,6 +38,7 @@ func NewArduinoCommunicator() *ArduinoCommunicator {
 	}
 }
 
+// RequestMeasurement writes a byte on serial port to ask Arduino for a new measurement
 func (ac *ArduinoCommunicator) RequestMeasurement() error {
 	req := []byte{1}
 	// Write will block until at least one byte is written
@@ -46,6 +50,7 @@ func (ac *ArduinoCommunicator) RequestMeasurement() error {
 	return nil
 }
 
+// read reads bytes written on serial port
 func (ac *ArduinoCommunicator) read(buffer []byte) (int, error) {
 	n, err := ac.port.Read(buffer)
 	if err != nil {
@@ -55,6 +60,7 @@ func (ac *ArduinoCommunicator) read(buffer []byte) (int, error) {
 	return n, nil
 }
 
+// ReadMeasurement reads measurement written on serial port and returns the amount of bytes read
 func (ac *ArduinoCommunicator) ReadMeasurement(buffer []byte) (int, error) {
 	// Read will block until at least one byte is returned
 	n, err := ac.read(buffer)
@@ -64,17 +70,18 @@ func (ac *ArduinoCommunicator) ReadMeasurement(buffer []byte) (int, error) {
 	glog.Infof("Data received is: %q", buffer[:n])
 
 	for buffer[n-1] != '\n' {
-		n_tmp, err := ac.read(buffer[n:])
+		nTmp, err := ac.read(buffer[n:])
 		if err != nil {
-			return n + n_tmp, err
+			return n + nTmp, err
 		}
-		n = n + n_tmp
+		n = n + nTmp
 	}
 
 	glog.Infof("Measurement received is: %q", buffer[:n])
 	return n, nil
 }
 
+// Close closes serial port
 func (ac *ArduinoCommunicator) Close() error {
 	if err := ac.port.Close(); err != nil {
 		glog.Errorf("Error closing serial port %v", err)
