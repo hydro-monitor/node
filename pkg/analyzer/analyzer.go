@@ -70,6 +70,17 @@ func (a *Analyzer) updateCurrentState(newStateName string) {
 	}
 }
 
+// lookForAndUpdateState receives a measurement, looks for current state and issues an status update.
+// If current state is not found, state stays as is. 
+func (a *Analyzer) lookForAndUpdateState(measurement float64) {
+	newState, err := a.lookForCurrentState(measurement)
+	if err != nil {
+		glog.Errorf("Could not found next state, staying at current state %s. Error: %v", a.currentState, measurement)
+	} else {
+		a.updateCurrentState(newState)
+	}
+}
+
 // analyze receives a measurement and checks if it is still within the limits of the current state. 
 // If not, it issues a state update.
 // If current state is not set, it looks for it in the current node configuration. 
@@ -90,10 +101,10 @@ func (a *Analyzer) analyze(measurement float64) {
 	// By design, if measurement is equal to lower limit, it is covered by the state 
 	if measurement >= a.config.GetState(a.currentState).UpperLimit {
 		glog.Info("Upper limit surpassed")
-		a.updateCurrentState(a.config.GetState(a.currentState).Next)
+		a.lookForAndUpdateState(measurement)
 	} else if measurement < a.config.GetState(a.currentState).LowerLimit {
 		glog.Info("Lower limit surpassed")
-		a.updateCurrentState(a.config.GetState(a.currentState).Prev)
+		a.lookForAndUpdateState(measurement)
 	} else {
 		glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
 	}
