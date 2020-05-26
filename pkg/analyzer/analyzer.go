@@ -75,7 +75,7 @@ func (a *Analyzer) updateCurrentState(newStateName string) {
 func (a *Analyzer) lookForAndUpdateState(measurement float64) {
 	newState, err := a.lookForCurrentState(measurement)
 	if err != nil {
-		glog.Errorf("Could not found next state, staying at current state %s. Error: %v", a.currentState, measurement)
+		glog.Errorf("Could not found next state, staying at current state %s. Error: %v", a.currentState, err)
 	} else {
 		a.updateCurrentState(newState)
 	}
