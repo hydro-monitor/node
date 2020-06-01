@@ -11,22 +11,31 @@ import (
 	"github.com/hydro-monitor/node/pkg/server"
 )
 
+const (
+	defaultStateName = "default"
+)
+
 // Configutation is a map with all posible states in the node configuration
 type Configutation struct {
-	stateNames []string
-	states     map[string]server.State
+	stateNames   []string
+	states       map[string]server.State
+	defaultState server.State
 }
 
 // NewConfiguration creates and returns a configuration with all its states
-func NewConfiguration(states map[string]server.State) (c *Configutation) {
+func NewConfiguration(states map[string]server.State) *Configutation {
 	stateNames := []string{}
 	for k := range states {
+		if k == defaultStateName {
+			continue
+		}
 		stateNames = append(stateNames, k)
 	}
 
 	return &Configutation{
-		stateNames: stateNames,
-		states:     states,
+		stateNames:   stateNames,
+		states:       states,
+		defaultState: states[defaultStateName],
 	}
 }
 
@@ -35,9 +44,19 @@ func (c *Configutation) GetStates() []string {
 	return c.stateNames
 }
 
-// GetState recerives a state name, returns the state struct
+// GetState receives a state name, returns the state struct
 func (c *Configutation) GetState(stateName string) server.State {
 	return c.states[stateName]
+}
+
+// GetDefaultState returns the default state struct
+func (c *Configutation) GetDefaultState() server.State {
+	return c.defaultState
+}
+
+// HasDefaultState returns true if configuration has a default state
+func (c *Configutation) HasDefaultState() bool {
+	return (c.defaultState.Name == defaultStateName)
 }
 
 // ConfigWatcher continuously polls the servers for the right configuration of the node

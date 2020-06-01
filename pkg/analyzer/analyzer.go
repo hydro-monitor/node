@@ -52,6 +52,12 @@ func (a *Analyzer) lookForCurrentState(measurement float64) (string, error) {
 			return stateName, nil
 		}
 	}
+
+	// If default state, that is the current state
+	if a.config.HasDefaultState() {
+		return a.config.GetDefaultState().Name, nil
+	}
+
 	glog.Errorf("Could not found current state for measurement %f", measurement)
 	return "", fmt.Errorf("Could not found current state for measurement %f", measurement)
 }
