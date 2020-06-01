@@ -19,7 +19,6 @@ const (
 type Configutation struct {
 	stateNames   []string
 	states       map[string]server.State
-	defaultState server.State
 }
 
 // NewConfiguration creates and returns a configuration with all its states
@@ -35,7 +34,6 @@ func NewConfiguration(states map[string]server.State) *Configutation {
 	return &Configutation{
 		stateNames:   stateNames,
 		states:       states,
-		defaultState: states[defaultStateName],
 	}
 }
 
@@ -49,14 +47,15 @@ func (c *Configutation) GetState(stateName string) server.State {
 	return c.states[stateName]
 }
 
-// GetDefaultState returns the default state struct
-func (c *Configutation) GetDefaultState() server.State {
-	return c.defaultState
+// GetDefaultState returns the default state name string
+func (c *Configutation) GetDefaultStateName() string {
+	return defaultStateName
 }
 
 // HasDefaultState returns true if configuration has a default state
 func (c *Configutation) HasDefaultState() bool {
-	return (c.defaultState.Name == defaultStateName)
+	_, ok := c.states[defaultStateName]
+	return ok
 }
 
 // ConfigWatcher continuously polls the servers for the right configuration of the node
