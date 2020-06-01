@@ -48,9 +48,6 @@ func NewServer() *Server {
 
 // State represents a state of a configuration
 type State struct {
-	// State name
-	// Nombre del estado
-	Name        string
 	// Time interval between measurements in seconds
 	// Intervalo de tiempo entre mediciones en segundos
 	Interval    int
@@ -63,12 +60,6 @@ type State struct {
 	// Amount of pictures taken per measurement
 	// Cantidad de fotos tomadas por medición
 	PicturesNum int
-	// Name of next state
-	// Nombre del estado siguiente
-	Next        string // State name (key)
-	// Name of previous state
-	// Nombre del estado anterior
-	Prev        string // State name (key)
 }
 
 // APIConfigutation represents a node configuration response from the hydro monitor server
