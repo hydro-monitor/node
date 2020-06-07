@@ -52,6 +52,12 @@ func (a *Analyzer) lookForCurrentState(measurement float64) (string, error) {
 			return stateName, nil
 		}
 	}
+
+	// If default state, that is the current state
+	if a.config.HasDefaultState() {
+		return a.config.GetDefaultStateName(), nil
+	}
+
 	glog.Errorf("Could not found current state for measurement %f", measurement)
 	return "", fmt.Errorf("Could not found current state for measurement %f", measurement)
 }
@@ -98,6 +104,22 @@ func (a *Analyzer) analyze(measurement float64) {
 			return
 		}
 	}
+
+	if a.currentState == a.config.GetDefaultStateName() {
+		if currentStateName, err := a.lookForCurrentState(measurement); err != nil {
+			glog.Errorf("Could not found next state, staying at default state %s. Error: %v", a.currentState, err)
+			return
+		} else {
+			if currentStateName == a.config.GetDefaultStateName() {
+				glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
+				return
+			} else {
+				a.updateCurrentState(currentStateName)
+				return
+			}
+		}
+	}
+
 	// By design, if measurement is equal to lower limit, it is covered by the state 
 	if measurement >= a.config.GetState(a.currentState).UpperLimit {
 		glog.Info("Upper limit surpassed")
@@ -108,7 +130,6 @@ func (a *Analyzer) analyze(measurement float64) {
 	} else {
 		glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
 	}
-	glog.Info("Measurement analysis done")
 }
 
 // Start starts analyzer process. Exits when stop is received
