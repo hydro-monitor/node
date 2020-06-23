@@ -30,6 +30,8 @@ type Config struct {
 	SerialPort                          string
 	// Baud rate de Arduino
 	Baud                                int
+	// URL servidor
+	ServerURL                           string
 	// URL para obtener configuración de nodo
 	GetNodeConfigurationURL             string
 	// URL para crear medición
@@ -50,6 +52,8 @@ type Config struct {
 
 // New returns a new Config struct loading variables from .env and using defaults for the values not present
 func New() *Config {
+	serverURL := getEnv("SERVER_URL", "http://antiguos.fi.uba.ar:443")
+
 	return &Config{
 		NodeName:                            getEnv("NODE_NAME", "1"),
 		WaterSensorDistance:                 getEnvAsInt("WATER_SENSOR_DISTANCE", 600),
@@ -60,10 +64,11 @@ func New() *Config {
 		PicturesDir:                         getEnv("PICTURES_DIR", "/home/pi/Documents/pictures"),
 		SerialPort:                          getEnv("SERIAL_PORT", "/dev/ttyACM0"),
 		Baud:                                getEnvAsInt("BAUD", 9600),
-		GetNodeConfigurationURL:             getEnv("GET_NODE_CONFIGURATION_URL", "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/configurations/%s"),
-		PostNodeMeasurementURL:              getEnv("POST_NODE_MEASUREMENT_URL", "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings"),
-		PostNodePictureURL:                  getEnv("POST_NODE_PICTURE_URL", "http://antiguos.fi.uba.ar:443/api/nodes/%s/readings/%s/photos"),
-		GetManualMeasurementRequestURL:      getEnv("GET_MANUAL_MEASUREMENT_REQUEST_URL", "https://my-json-server.typicode.com/hydro-monitor/web-api-mock/requests/%s"),
+		ServerURL:                           serverURL,
+		GetNodeConfigurationURL:             serverURL + getEnv("GET_NODE_CONFIGURATION_PATH", "/api/nodes/%s/configuration"),
+		PostNodeMeasurementURL:              serverURL + getEnv("POST_NODE_MEASUREMENT_PATH", "/api/nodes/%s/readings"),
+		PostNodePictureURL:                  serverURL + getEnv("POST_NODE_PICTURE_PATH", "/api/nodes/%s/readings/%s/photos"),
+		GetManualMeasurementRequestURL:      serverURL + getEnv("GET_MANUAL_MEASUREMENT_REQUEST_PATH", "/api/nodes/%s/manual-reading"),
 		IntervalUpdateTimeout:               getEnvAsInt("INTERVAL_UPDATE_TIMEOUT", 10),
 		ConfigurationUpdateTimeout:          getEnvAsInt("CONFIGURATION_UPDATE_TIMEOUT", 10),
 		ManualMeasurementRequestSendTimeout: getEnvAsInt("MANUAL_MEASUREMENT_REQUEST_SEND_TIMEOUT", 10),
