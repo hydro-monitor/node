@@ -59,3 +59,5 @@ EOF
 
 # Restart HA Proxy with new config
 systemctl restart haproxy
+
+# HAP logs will be in /var/log/haproxy.log file
