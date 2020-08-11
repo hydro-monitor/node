@@ -10,7 +10,7 @@ ExecStart=/home/pi/Documents/node/_output/node
 
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=awesome_micro_service
+SyslogIdentifier=hydro_monitor_node
 
 [Install]
 WantedBy=multi-user.target
