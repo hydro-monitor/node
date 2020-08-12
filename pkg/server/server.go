@@ -69,9 +69,9 @@ type APIConfigutation struct {
 
 // APIMeasurement represents a measurement creation request for the hydro monitor server
 type APIMeasurement struct {
-	Time       time.Time `json:"timestamp"`
-	WaterLevel float64   `json:"waterLevel"`
-	WasManual  bool      `json:"wasManual"`
+	Time          time.Time `json:"timestamp"`
+	WaterLevel    float64   `json:"waterLevel"`
+	ManualReading bool      `json:"manualReading"`
 }
 
 // APIMeasurementResponse represents a measurement creation response from the hydro monitor server

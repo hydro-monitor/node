@@ -74,7 +74,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 	measurementID, err := m.server.PostNodeMeasurement(server.APIMeasurement{
 		Time:       time,
 		WaterLevel: waterLevel,
-		WasManual:  manual,
+		ManualReading:  manual,
 	})
 	if err != nil {
 		glog.Errorf("Error sending measurement %f to server: %v. Skipping measurement", waterLevel, err)
