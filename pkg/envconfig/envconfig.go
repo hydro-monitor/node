@@ -10,7 +10,7 @@ import (
 type Config struct {
 	// Nombre del nodo
 	NodeName                            string
-	// Altura a la cual se encuentra el sensor, medida desde el fondo del río
+	// Altura a la cual se encuentra el sensor, medida desde el fondo del río en cm
 	WaterSensorDistance                 int
 	// Intervalo inicial entre toma de mediciones. Es el intervalo de tiempo en segundos 
 	// entre cada toma de medición hasta cargar la configuración del nodo presente en el servidor
