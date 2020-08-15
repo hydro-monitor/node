@@ -20,7 +20,7 @@ type Trigger struct {
 // NewTrigger creates and returns a new measurement trigger
 func NewTrigger(interval int, measurer_chan chan int, analyzer_chan chan int, wg *sync.WaitGroup) *Trigger {
 	return &Trigger{
-		interval:      time.Duration(interval),
+		interval:      time.Duration(interval) * time.Second,
 		measurer_chan: measurer_chan,
 		analyzer_chan: analyzer_chan,
 		stop_chan:     make(chan int),
@@ -30,15 +30,21 @@ func NewTrigger(interval int, measurer_chan chan int, analyzer_chan chan int, wg
 
 // Start starts measurement trigger process. Exits when stop is received
 func (t *Trigger) Start() error {
-	t.timer = time.NewTicker(t.interval * time.Second)
+	t.timer = time.NewTicker(t.interval)
 	for {
 		select {
 		case newInterval := <-t.analyzer_chan:
-			t.timer.Stop()
-			t.interval = time.Duration(newInterval)
-			glog.Infof("New interval received, creating new ticker with interval %d, %v", newInterval, t.interval)
-			t.timer = time.NewTicker(t.interval * time.Second)
-			glog.Infof("Old timer stopped. New interval: %d", newInterval)
+			newIntervalDuration := time.Duration(newInterval) * time.Second
+			glog.Infof("Interval received is %v, while current interval is: %v", newIntervalDuration, t.interval)
+			if (newIntervalDuration != t.interval) {
+				glog.Infof("Interval received is %v, differs from current interval: %v. Updating ticker", newIntervalDuration, t.interval)			
+				t.interval = newIntervalDuration
+				t.timer.Stop()
+				t.timer = time.NewTicker(t.interval)
+				glog.Infof("Old timer stopped. New interval: %d", newInterval)
+			} else {
+				glog.Infof("Timer continues unchanged")
+			}
 		case time := <-t.timer.C:
 			glog.Infof("Tick at %v. Awaking Measurer", time)
 			t.measurer_chan <- 1
