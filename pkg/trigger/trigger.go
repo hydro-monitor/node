@@ -41,7 +41,7 @@ func (t *Trigger) Start() error {
 				t.interval = newIntervalDuration
 				t.timer.Stop()
 				t.timer = time.NewTicker(t.interval)
-				glog.Infof("Old timer stopped. New interval: %d", newInterval)
+				glog.Infof("Old timer stopped. New interval is: %v", newIntervalDuration)
 			} else {
 				glog.Infof("Timer continues unchanged")
 			}
