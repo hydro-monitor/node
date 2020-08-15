@@ -108,13 +108,13 @@ func (a *Analyzer) analyze(measurement float64) {
 	if a.currentState == a.config.GetDefaultStateName() {
 		if currentStateName, err := a.lookForCurrentState(measurement); err != nil {
 			glog.Errorf("Could not found next state, staying at default state %s. Error: %v", a.currentState, err)
-			// check if there was a default config update and send new interval to trigger 
+			// send current interval anyway in case there was a config update between measurements 
 			a.updateCurrentState(a.config.GetDefaultStateName())
 			return
 		} else {
 			if currentStateName == a.config.GetDefaultStateName() {
 				glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
-				// check if there was a default config update and send new interval to trigger
+				// send current interval anyway in case there was a config update between measurements 
 				a.updateCurrentState(a.config.GetDefaultStateName())
 				return
 			} else {
@@ -133,7 +133,7 @@ func (a *Analyzer) analyze(measurement float64) {
 		a.lookForAndUpdateState(measurement)
 	} else {
 		glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
-		// check if there was a state config update and send new interval to trigger
+		// send current interval anyway in case there was a config update between measurements 
 		a.updateCurrentState(a.currentState)
 	}
 }
