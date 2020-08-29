@@ -64,7 +64,7 @@ func (a *Analyzer) lookForCurrentState(measurement float64) (string, error) {
 
 // updateCurrentState saves new state name and sends new interval to measurement trigger process
 func (a *Analyzer) updateCurrentState(newStateName string) {
-	glog.Infof("New current state is %s", newStateName)
+	glog.Infof("Current state is %s", newStateName)
 	a.currentState = newStateName
 	newInterval := a.config.GetState(newStateName).Interval
 	glog.Infof("Sending new current interval (%d) to Trigger", newInterval)
@@ -100,7 +100,7 @@ func (a *Analyzer) analyze(measurement float64) {
 			return
 		} else {
 			a.updateCurrentState(currentStateName)
-			glog.Infof("Current state (%s) set successfuly. Measurement analysis done", currentStateName)
+			glog.Infof("Current state (%s) set successfully. Measurement analysis done", currentStateName)
 			return
 		}
 	}
@@ -108,10 +108,14 @@ func (a *Analyzer) analyze(measurement float64) {
 	if a.currentState == a.config.GetDefaultStateName() {
 		if currentStateName, err := a.lookForCurrentState(measurement); err != nil {
 			glog.Errorf("Could not found next state, staying at default state %s. Error: %v", a.currentState, err)
+			// send current interval anyway in case there was a config update between measurements 
+			a.updateCurrentState(a.config.GetDefaultStateName())
 			return
 		} else {
 			if currentStateName == a.config.GetDefaultStateName() {
 				glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
+				// send current interval anyway in case there was a config update between measurements 
+				a.updateCurrentState(a.config.GetDefaultStateName())
 				return
 			} else {
 				a.updateCurrentState(currentStateName)
@@ -129,6 +133,8 @@ func (a *Analyzer) analyze(measurement float64) {
 		a.lookForAndUpdateState(measurement)
 	} else {
 		glog.Infof("No limits were surpassed. Current state is (still) %s", a.currentState)
+		// send current interval anyway in case there was a config update between measurements 
+		a.updateCurrentState(a.currentState)
 	}
 }
 
