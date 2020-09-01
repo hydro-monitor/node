@@ -56,7 +56,7 @@ backend app
 	option log-health-checks
 	server srv1 104.211.23.145:8080 check port 8080 inter 120000 fall 3
 	server srv2 13.90.231.210:8080 check port 8080 inter 120000 fall 3
-	server srv3 18.229.102.224:443 check port 8080 inter 120000 fall 3
+	server srv3 18.229.102.224:443 check port 443 inter 120000 fall 3
 EOF
 
 # Restart HA Proxy with new config
