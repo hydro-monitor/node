@@ -52,7 +52,7 @@ frontend main
 
 backend app
 	balance roundrobin
-	option httpchk GET /api/nodes
+	option httpchk GET /health
 	option log-health-checks
 	server srv1 192.168.0.69:8080 check port 8080 inter 5000 fall 3
 EOF
