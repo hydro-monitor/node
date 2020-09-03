@@ -66,7 +66,7 @@ func (m *Measurer) takeWaterLevelMeasurement() float64 {
 // takeMeasurement takes water level, sends water measurement to server. 
 // Takes picture and uploads picture to new server measurement.
 func (m *Measurer) takeMeasurement(manual bool) {
-	measurementIDChan := make(chan *gocql.UUID)
+	measurementIDChan := make(chan *gocql.UUID, 1)
 	timeOfMeasurement := time.Now()
 
 	go func(measurementIDChan chan *gocql.UUID, timeOfMeasurement time.Time, manual bool) {
@@ -94,7 +94,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 		pictureFile, err := m.takePicture(timeOfMeasurement)
 		if err != nil {
 			glog.Errorf("Error taking picture: %v. Skipping measurement", err)
-			return // FIXME Esto va a provocar que se bloquee la rutina anterior porque nunca se saca el readingID del channel?
+			return // FIXME Esto va a provocar que se bloquee la rutina anterior porque nunca se saca el readingID del channel? Si hay un buffer no
 		}
 
 		glog.Infof("Picture taken. Waiting for measurement ID from water level routine")
