@@ -171,7 +171,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := http.Post(fmt.Sprintf(s.postNodePictureURL, s.nodeName, measurementID), contentType, body)
+	res, err := s.client.Post(fmt.Sprintf(s.postNodePictureURL, s.nodeName, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
