@@ -14,6 +14,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/golang/glog"
+	"github.com/hashicorp/go-retryablehttp"
 
 	"github.com/hydro-monitor/node/pkg/envconfig"
 )
@@ -30,11 +31,11 @@ type Server struct {
 
 // NewServer creates and returns a server taking nodeName and urls from env config
 func NewServer() *Server {
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
 	env := envconfig.New()
+
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = env.HTTPClientMaxRetries
+	client := retryClient.StandardClient()
 
 	return &Server{
 		client:                         client,
