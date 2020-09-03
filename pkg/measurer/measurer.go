@@ -84,7 +84,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 			measurementIDChan <- nil
 			return
 		}
-		time.Sleep(time.Second * 7)
+		time.Sleep(time.Minute * 2)
 		glog.Infof("Sending measurement ID %v to picture routine", measurementID)
 		measurementIDChan <- measurementID
 		glog.Infof("Measurement ID %v sent", measurementID)
