@@ -84,6 +84,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 			measurementIDChan <- nil
 			return
 		}
+		time.Sleep(time.Second * 7)
 		glog.Infof("Sending measurement ID %v to picture routine", measurementID)
 		measurementIDChan <- measurementID
 		glog.Infof("Measurement ID %v sent", measurementID)
@@ -94,7 +95,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 		pictureFile, err := m.takePicture(timeOfMeasurement)
 		if err != nil {
 			glog.Errorf("Error taking picture: %v. Skipping measurement", err)
-			return // FIXME Esto va a provocar que se bloquee la rutina anterior porque nunca se saca el readingID del channel? Si hay un buffer no
+			return
 		}
 
 		glog.Infof("Picture taken. Waiting for measurement ID from water level routine")
@@ -114,6 +115,8 @@ func (m *Measurer) takeMeasurement(manual bool) {
 			return
 		}
 	}(measurementIDChan, timeOfMeasurement)
+
+	glog.Infof("IM LEAVING, BYE")
 }
 
 // Start starts measurer process. Exits when stop is received
