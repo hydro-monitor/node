@@ -84,9 +84,8 @@ func (m *Measurer) takeMeasurement(manual bool) {
 			measurementIDChan <- nil
 			return
 		}
-		time.Sleep(time.Minute * 2)
 		glog.Infof("Sending measurement ID %v to picture routine", measurementID)
-		measurementIDChan <- measurementID
+		measurementIDChan <- nil //measurementID test sending nil
 		glog.Infof("Measurement ID %v sent", measurementID)
 	}(measurementIDChan, timeOfMeasurement, manual)
 
@@ -115,8 +114,6 @@ func (m *Measurer) takeMeasurement(manual bool) {
 			return
 		}
 	}(measurementIDChan, timeOfMeasurement)
-
-	glog.Infof("IM LEAVING, BYE")
 }
 
 // Start starts measurer process. Exits when stop is received
