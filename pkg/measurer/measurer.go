@@ -85,7 +85,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 			return
 		}
 		glog.Infof("Sending measurement ID %v to picture routine", measurementID)
-		measurementIDChan <- nil //measurementID test sending nil
+		measurementIDChan <- measurementID
 		glog.Infof("Measurement ID %v sent", measurementID)
 	}(measurementIDChan, timeOfMeasurement, manual)
 
