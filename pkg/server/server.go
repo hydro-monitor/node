@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -35,6 +36,7 @@ func NewServer() *Server {
 
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = env.HTTPClientMaxRetries
+	retryClient.CheckRetry = retryOnNotFoundPolicy
 	client := retryClient.StandardClient()
 
 	return &Server{
@@ -204,4 +206,16 @@ func (s *Server) GetManualMeasurementRequest() (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+// retryOnNotFoundPolicy is the same as DefaultRetryPolicy, except it
+// retries if resp status code was Not Found (404)
+func retryOnNotFoundPolicy(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	retry, reqErr := retryablehttp.DefaultRetryPolicy(ctx, resp, err);
+	if !retry && resp.StatusCode == 404 {
+		// Retry in case of 404 just in case of consistency between servers is not met yet
+		glog.Infof("Response (%v) was Not Found, retrying", resp)
+		return true, reqErr
+	}
+	return retry, reqErr
 }
