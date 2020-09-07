@@ -50,6 +50,10 @@ type Config struct {
 	ManualMeasurementRequestSendTimeout int
 	// Timeout de envío de nueva medición para analizar 
 	MeasurementToAnalyzerSendTimeout    int
+	// Calidad de la captura de piCamera
+	CameraPictureQuality                int
+	// Timeout para captura de piCamera em milisegundos
+	CameraCaptureTimeout                int
 }
 
 // New returns a new Config struct loading variables from .env and using defaults for the values not present
@@ -76,6 +80,8 @@ func New() *Config {
 		ConfigurationUpdateTimeout:          getEnvAsInt("CONFIGURATION_UPDATE_TIMEOUT", 10),
 		ManualMeasurementRequestSendTimeout: getEnvAsInt("MANUAL_MEASUREMENT_REQUEST_SEND_TIMEOUT", 10),
 		MeasurementToAnalyzerSendTimeout:    getEnvAsInt("MEASUREMENT_TO_ANALYZER_SEND_TIMEOUT", 10),
+		CameraPictureQuality:                getEnvAsInt("PICTURE_QUALITY", 20),
+		CameraCaptureTimeout:                getEnvAsInt("PICTURE_CAPTURE_TIMEOUT", 500),
 	}
 }
 

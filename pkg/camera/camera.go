@@ -16,7 +16,9 @@ import (
 // Camera represents a raspicam that takes pictures and saves them under picturesDir
 type Camera struct {
 	sync.Mutex
-	picturesDir string
+	picturesDir  string
+	timeout time.Duration
+	quality      int
 }
 
 // NewCamera creates and returns a new camera taking picturesDir from envconfig
@@ -24,17 +26,19 @@ func NewCamera() *Camera {
 	env := envconfig.New()
 	return &Camera{
 		picturesDir: env.PicturesDir,
+		timeout: time.Duration(env.CameraCaptureTimeout) * time.Millisecond,
+		quality: env.CameraPictureQuality,
 	}
 }
 
 // getStillConfig returns new *raspicam.Still with Quality, Height, Width, PreviewMode and Timeout set
 func (c *Camera) getStillConfig() *raspicam.Still {
 	stillConfig := raspicam.NewStill()
-	stillConfig.Quality = 20
+	stillConfig.Quality = c.quality
 	//stillConfig.Height = TODO set size
 	//stillConfig.Width =
 	stillConfig.Preview.Mode = raspicam.PreviewDisabled
-	stillConfig.Timeout = time.Duration(500 * time.Millisecond)
+	stillConfig.Timeout = c.timeout
 	return stillConfig
 }
 
