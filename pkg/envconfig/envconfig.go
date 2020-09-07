@@ -50,7 +50,7 @@ type Config struct {
 	ManualMeasurementRequestSendTimeout int
 	// Timeout de envío de nueva medición para analizar 
 	MeasurementToAnalyzerSendTimeout    int
-	// Calidad de la captura de piCamera
+	// Calidad de la captura de piCamera (jpeg quality <0 to 100>)
 	CameraPictureQuality                int
 	// Timeout para captura de piCamera em milisegundos
 	CameraCaptureTimeout                int
