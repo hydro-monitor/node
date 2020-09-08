@@ -30,6 +30,10 @@ type Config struct {
 	SerialPort                          string
 	// Baud rate de Arduino
 	Baud                                int
+	// Constraseña de nodo para comunicación con servidor
+	NodePassword                        string
+	// Secreto de JWT para comunicación con servidor
+	Secret                              string
 	// URL servidor
 	ServerURL                           string
 	// URL para obtener configuración de nodo
@@ -70,6 +74,8 @@ func New() *Config {
 		PicturesDir:                         getEnv("PICTURES_DIR", "/home/pi/Documents/pictures"),
 		SerialPort:                          getEnv("SERIAL_PORT", "/dev/ttyACM0"),
 		Baud:                                getEnvAsInt("BAUD", 9600),
+		NodePassword:                        getEnv("NODE_PASSWORD", "1"),
+		Secret:                              getEnv("SECRET", "hydromon2020"),
 		ServerURL:                           serverURL,
 		GetNodeConfigurationURL:             serverURL + getEnv("GET_NODE_CONFIGURATION_PATH", "/api/nodes/%s/configuration"),
 		PostNodeMeasurementURL:              serverURL + getEnv("POST_NODE_MEASUREMENT_PATH", "/api/nodes/%s/readings"),

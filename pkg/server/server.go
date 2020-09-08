@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gocql/gocql"
 	"github.com/golang/glog"
 	"github.com/hashicorp/go-retryablehttp"
@@ -20,10 +21,19 @@ import (
 	"github.com/hydro-monitor/node/pkg/envconfig"
 )
 
+const (
+	contentTypeHeader = "Content-Type"
+	contentTypeHeaderValue = "application/json"
+	authorizationHeader = "Authorization"
+	authorizationHeaderValue = "Bearer %s"
+)
+
 // Server represents a server for a specific node
 type Server struct {
 	client                         *http.Client
 	nodeName                       string
+	nodePassword                   string
+	secret                         string
 	getNodeConfigurationURL        string
 	postNodeMeasurementURL         string
 	postNodePictureURL             string
@@ -42,6 +52,8 @@ func NewServer() *Server {
 	return &Server{
 		client:                         client,
 		nodeName:                       env.NodeName,
+		nodePassword:                   env.NodePassword,
+		secret:                         env.Secret,
 		getNodeConfigurationURL:        env.GetNodeConfigurationURL,
 		postNodeMeasurementURL:         env.PostNodeMeasurementURL,
 		postNodePictureURL:             env.PostNodePictureURL,
@@ -95,15 +107,58 @@ type APIMeasurementRequest struct {
 	ManualReading bool `json:"manualReading"`
 }
 
+// TODO
+func generateJWT(nodePassword, secret string) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["exp"] = time.Now().Add(time.Hour * 8).Unix()
+	claims["password"] = nodePassword
+
+	t, err := token.SignedString([]byte(secret))
+	if err != nil {
+		return "", err
+	}
+	return t, nil
+}
+
+// TODO
+func (s *Server) doPostRequest(url, contentType string, body io.Reader) (*http.Response, error) {
+	token, err := generateJWT(s.nodePassword, s.secret)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set(contentTypeHeader, contentType)
+	req.Header.Set(authorizationHeader, fmt.Sprint(authorizationHeaderValue, token))
+	return s.client.Do(req)
+}
+
+// TODO
+func (s *Server) doGetRequest(url string) (*http.Response, error) {
+	token, err := generateJWT(s.nodePassword, s.secret)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set(authorizationHeader, fmt.Sprint(authorizationHeaderValue, token))
+	return s.client.Do(req)
+}
+
 // GetNodeConfiguration returns node configuration from hydro monitor server
 func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
-	resp, err := s.client.Get(fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName))
+	resp, err := s.doGetRequest(fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName))
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 404 {
+	if resp.StatusCode == 404 { //FIXME
 		return nil, fmt.Errorf("Node has no configuration loaded")
 	}
 
@@ -117,9 +172,13 @@ func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 
 // PostNodeMeasurement sends new measurement to hydro monitor server
 func (s *Server) PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, error) {
-	requestByte, _ := json.Marshal(measurement)
+	requestByte, err := json.Marshal(measurement)
+	if err != nil {
+		return nil, err
+	}
 	requestReader := bytes.NewReader(requestByte)
-	res, err := s.client.Post(fmt.Sprintf(s.postNodeMeasurementURL, s.nodeName), "application/json", requestReader)
+	
+	res, err := s.doPostRequest(fmt.Sprintf(s.postNodeMeasurementURL, s.nodeName), contentTypeHeaderValue, requestReader)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +232,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := s.client.Post(fmt.Sprintf(s.postNodePictureURL, s.nodeName, measurementID), contentType, body)
+	res, err := s.doPostRequest(fmt.Sprintf(s.postNodePictureURL, s.nodeName, measurementID), contentType, body)
 	if err != nil {
 		return err
 	}
@@ -192,7 +251,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 
 // GetManualMeasurementRequest returns true if manual measurement is requested
 func (s *Server) GetManualMeasurementRequest() (bool, error) {
-	resp, err := s.client.Get(fmt.Sprintf(s.getManualMeasurementRequestURL, s.nodeName))
+	resp, err := s.doGetRequest(fmt.Sprintf(s.getManualMeasurementRequestURL, s.nodeName))
 	if err != nil {
 		return false, err
 	}
