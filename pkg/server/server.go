@@ -133,7 +133,7 @@ func (s *Server) doPostRequest(url, contentType string, body io.Reader) (*http.R
 		return nil, err
 	}
 	req.Header.Set(contentTypeHeader, contentType)
-	req.Header.Set(authorizationHeader, fmt.Sprint(authorizationHeaderValue, token))
+	req.Header.Set(authorizationHeader, fmt.Sprintf(authorizationHeaderValue, token))
 	return s.client.Do(req)
 }
 
