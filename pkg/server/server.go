@@ -118,6 +118,7 @@ func generateJWT(nodePassword, secret string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	glog.Infof("JWT generated: %s", t)
 	return t, nil
 }
 
