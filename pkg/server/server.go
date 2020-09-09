@@ -147,8 +147,13 @@ func (s *Server) doGetRequest(url string) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set(authorizationHeader, fmt.Sprint(authorizationHeaderValue, token))
+	req.Header.Set(authorizationHeader, fmt.Sprintf(authorizationHeaderValue, token))
 	return s.client.Do(req)
+}
+
+// TODO
+func requestIsSuccessful(statusCode int) bool {
+	return (statusCode >= 200 && statusCode <= 299)
 }
 
 // GetNodeConfiguration returns node configuration from hydro monitor server
@@ -159,8 +164,11 @@ func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == 404 { //FIXME
+	if resp.StatusCode == 404 {
 		return nil, fmt.Errorf("Node has no configuration loaded")
+	}
+	if !requestIsSuccessful(resp.StatusCode) {
+		return nil, fmt.Errorf("Error requesting node configuration. code: %v", resp.StatusCode)
 	}
 
 	statesMap := make(map[string]State)
@@ -184,6 +192,10 @@ func (s *Server) PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, e
 		return nil, err
 	}
 	defer res.Body.Close()
+
+	if !requestIsSuccessful(res.StatusCode) {
+		return nil, fmt.Errorf("Error creating node measurement. code: %v", res.StatusCode)
+	}
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
@@ -239,6 +251,10 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 	}
 	defer res.Body.Close()
 
+	if !requestIsSuccessful(res.StatusCode) {
+		return fmt.Errorf("Error creating node measurement photo. code: %v", res.StatusCode)
+	}
+
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		glog.Errorf("Error reading response body for picture upload: %v", err)
@@ -258,6 +274,10 @@ func (s *Server) GetManualMeasurementRequest() (bool, error) {
 	}
 	defer resp.Body.Close()
 
+	if !requestIsSuccessful(resp.StatusCode) {
+		return false, fmt.Errorf("Error getting manual measurement request. code: %v", resp.StatusCode)
+	}
+
 	respMeasurementReq := APIMeasurementRequest{}
 	if err := json.NewDecoder(resp.Body).Decode(&respMeasurementReq); err != nil {
 		return false, err
@@ -270,7 +290,7 @@ func (s *Server) GetManualMeasurementRequest() (bool, error) {
 
 // retryOnNotFoundPolicy is the same as DefaultRetryPolicy, except it
 // retries if resp status code was Not Found (404)
-func retryOnNotFoundPolicy(ctx context.Context, resp *http.Response, err error) (bool, error) {
+func retryOnNotFoundPolicy(ctx context.Context, resp *http.Response, err error) (bool, error) { // FIXME use only for photo post
 	retry, reqErr := retryablehttp.DefaultRetryPolicy(ctx, resp, err);
 	if !retry && resp.StatusCode == 404 {
 		// Retry in case of 404 just in case of consistency between servers is not met yet
