@@ -46,10 +46,12 @@ func NewServer() *Server {
 	env := envconfig.New()
 
 	retryClient := retryablehttp.NewClient()
+	retryClient.RetryWaitMin = time.Duration(env.HTTPClientRetryWaitMin) * time.Second
 	retryClient.RetryMax = env.HTTPClientMaxRetries
 	client := retryClient.StandardClient()
 
 	retryOnNotFoundClient := retryablehttp.NewClient()
+	retryOnNotFoundClient.RetryWaitMin = time.Duration(env.HTTPClientRetryWaitMin) * time.Second
 	retryOnNotFoundClient.RetryMax = env.HTTPClientMaxRetries
 	retryOnNotFoundClient.CheckRetry = retryOnNotFoundPolicy
 	notFoundClient := retryOnNotFoundClient.StandardClient()

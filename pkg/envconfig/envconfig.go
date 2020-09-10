@@ -46,6 +46,8 @@ type Config struct {
 	GetManualMeasurementRequestURL      string
 	// Máxima cantidad de retries para cliente HTTP
 	HTTPClientMaxRetries                int
+	// Mínima cantidad de segundos a esperar antes de un retry para cliente HTTP
+	HTTPClientRetryWaitMin              int
 	// Timeout para actualización de intervalo de toma de mediciones
 	IntervalUpdateTimeout               int
 	// Timeout para actualización de configuración de nodo
@@ -82,6 +84,7 @@ func New() *Config {
 		PostNodePictureURL:                  serverURL + getEnv("POST_NODE_PICTURE_PATH", "/api/nodes/%s/readings/%s/photos"),
 		GetManualMeasurementRequestURL:      serverURL + getEnv("GET_MANUAL_MEASUREMENT_REQUEST_PATH", "/api/nodes/%s/manual-reading"),
 		HTTPClientMaxRetries:                getEnvAsInt("HTTP_CLIENT_MAX_RETRIES", 5),
+		HTTPClientRetryWaitMin:              getEnvAsInt("HTTP_CLIENT_RETRY_WAIT_MIN", 4),
 		IntervalUpdateTimeout:               getEnvAsInt("INTERVAL_UPDATE_TIMEOUT", 10),
 		ConfigurationUpdateTimeout:          getEnvAsInt("CONFIGURATION_UPDATE_TIMEOUT", 10),
 		ManualMeasurementRequestSendTimeout: getEnvAsInt("MANUAL_MEASUREMENT_REQUEST_SEND_TIMEOUT", 10),
