@@ -34,9 +34,9 @@ defaults
 	mode	http
 	option	httplog
 	option	dontlognull
-        timeout connect 5000
-        timeout client  50000
-        timeout server  50000
+	timeout connect 180s
+	timeout client  600s
+	timeout server  600s
 	errorfile 400 /etc/haproxy/errors/400.http
 	errorfile 403 /etc/haproxy/errors/403.http
 	errorfile 408 /etc/haproxy/errors/408.http
@@ -44,7 +44,7 @@ defaults
 	errorfile 502 /etc/haproxy/errors/502.http
 	errorfile 503 /etc/haproxy/errors/503.http
 	errorfile 504 /etc/haproxy/errors/504.http
-	retries 3
+	#retries 3
 
 frontend main
 	bind *:80
@@ -54,7 +54,9 @@ backend app
 	balance roundrobin
 	option httpchk GET /health
 	option log-health-checks
-	server srv1 192.168.0.69:8080 check port 8080 inter 5000 fall 3
+	server srv1 104.211.23.145:8080 check port 8080 inter 120000 fall 3
+	server srv2 13.90.231.210:8080 check port 8080 inter 120000 fall 3
+	server srv3 18.229.102.224:443 check port 443 inter 120000 fall 3
 EOF
 
 # Restart HA Proxy with new config
