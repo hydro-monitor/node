@@ -31,6 +31,7 @@ const (
 // Server represents a server for a specific node
 type Server struct {
 	client                         *http.Client
+	notFoundClient                 *http.Client
 	nodeName                       string
 	nodePassword                   string
 	secret                         string
@@ -46,11 +47,16 @@ func NewServer() *Server {
 
 	retryClient := retryablehttp.NewClient()
 	retryClient.RetryMax = env.HTTPClientMaxRetries
-	retryClient.CheckRetry = retryOnNotFoundPolicy
 	client := retryClient.StandardClient()
+
+	retryOnNotFoundClient := retryablehttp.NewClient()
+	retryOnNotFoundClient.RetryMax = env.HTTPClientMaxRetries
+	retryOnNotFoundClient.CheckRetry = retryOnNotFoundPolicy
+	notFoundClient := retryOnNotFoundClient.StandardClient()
 
 	return &Server{
 		client:                         client,
+		notFoundClient:                 notFoundClient,
 		nodeName:                       env.NodeName,
 		nodePassword:                   env.NodePassword,
 		secret:                         env.Secret,
@@ -107,7 +113,7 @@ type APIMeasurementRequest struct {
 	ManualReading bool `json:"manualReading"`
 }
 
-// TODO
+// generateJWT generates a json web token based on node password and secret
 func generateJWT(nodePassword, secret string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -122,8 +128,8 @@ func generateJWT(nodePassword, secret string) (string, error) {
 	return t, nil
 }
 
-// TODO
-func (s *Server) doPostRequest(url, contentType string, body io.Reader) (*http.Response, error) {
+// doPostRequest generates JWT, sets headers and performs POST request
+func (s *Server) doPostRequest(url, contentType string, body io.Reader, retryOnNotFound bool) (*http.Response, error) {
 	token, err := generateJWT(s.nodePassword, s.secret)
 	if err != nil {
 		return nil, err
@@ -134,11 +140,14 @@ func (s *Server) doPostRequest(url, contentType string, body io.Reader) (*http.R
 	}
 	req.Header.Set(contentTypeHeader, contentType)
 	req.Header.Set(authorizationHeader, fmt.Sprintf(authorizationHeaderValue, token))
+	if retryOnNotFound {
+		return s.notFoundClient.Do(req)
+	}
 	return s.client.Do(req)
 }
 
-// TODO
-func (s *Server) doGetRequest(url string) (*http.Response, error) {
+// doGetRequest generates JWT, sets headers and performs GET request
+func (s *Server) doGetRequest(url string, retryOnNotFound bool) (*http.Response, error) {
 	token, err := generateJWT(s.nodePassword, s.secret)
 	if err != nil {
 		return nil, err
@@ -148,17 +157,20 @@ func (s *Server) doGetRequest(url string) (*http.Response, error) {
 		return nil, err
 	}
 	req.Header.Set(authorizationHeader, fmt.Sprintf(authorizationHeaderValue, token))
+	if retryOnNotFound {
+		return s.notFoundClient.Do(req)
+	}
 	return s.client.Do(req)
 }
 
-// TODO
+// requestIsSuccessful returns true if the status code is 2XX, false otherwise
 func requestIsSuccessful(statusCode int) bool {
 	return (statusCode >= 200 && statusCode <= 299)
 }
 
 // GetNodeConfiguration returns node configuration from hydro monitor server
 func (s *Server) GetNodeConfiguration() (*APIConfigutation, error) {
-	resp, err := s.doGetRequest(fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName))
+	resp, err := s.doGetRequest(fmt.Sprintf(s.getNodeConfigurationURL, s.nodeName), false)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +199,7 @@ func (s *Server) PostNodeMeasurement(measurement APIMeasurement) (*gocql.UUID, e
 	}
 	requestReader := bytes.NewReader(requestByte)
 	
-	res, err := s.doPostRequest(fmt.Sprintf(s.postNodeMeasurementURL, s.nodeName), contentTypeHeaderValue, requestReader)
+	res, err := s.doPostRequest(fmt.Sprintf(s.postNodeMeasurementURL, s.nodeName), contentTypeHeaderValue, requestReader, false)
 	if err != nil {
 		return nil, err
 	}
@@ -245,7 +257,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 	}
 
 	contentType := writer.FormDataContentType()
-	res, err := s.doPostRequest(fmt.Sprintf(s.postNodePictureURL, s.nodeName, measurementID), contentType, body)
+	res, err := s.doPostRequest(fmt.Sprintf(s.postNodePictureURL, s.nodeName, measurementID), contentType, body, true)
 	if err != nil {
 		return err
 	}
@@ -268,7 +280,7 @@ func (s *Server) PostNodePicture(measurement APIPicture) error {
 
 // GetManualMeasurementRequest returns true if manual measurement is requested
 func (s *Server) GetManualMeasurementRequest() (bool, error) {
-	resp, err := s.doGetRequest(fmt.Sprintf(s.getManualMeasurementRequestURL, s.nodeName))
+	resp, err := s.doGetRequest(fmt.Sprintf(s.getManualMeasurementRequestURL, s.nodeName), false)
 	if err != nil {
 		return false, err
 	}
@@ -290,7 +302,7 @@ func (s *Server) GetManualMeasurementRequest() (bool, error) {
 
 // retryOnNotFoundPolicy is the same as DefaultRetryPolicy, except it
 // retries if resp status code was Not Found (404)
-func retryOnNotFoundPolicy(ctx context.Context, resp *http.Response, err error) (bool, error) { // FIXME use only for photo post
+func retryOnNotFoundPolicy(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	retry, reqErr := retryablehttp.DefaultRetryPolicy(ctx, resp, err);
 	if !retry && resp.StatusCode == 404 {
 		// Retry in case of 404 just in case of consistency between servers is not met yet
