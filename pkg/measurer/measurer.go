@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gocql/gocql"
 	"github.com/golang/glog"
 
 	"github.com/hydro-monitor/node/pkg/camera"
@@ -65,27 +66,42 @@ func (m *Measurer) takeWaterLevelMeasurement() float64 {
 // takeMeasurement takes water level, sends water measurement to server. 
 // Takes picture and uploads picture to new server measurement.
 func (m *Measurer) takeMeasurement(manual bool) {
-	time := time.Now()
+	measurementIDChan := make(chan *gocql.UUID, 1)
+	timeOfMeasurement := time.Now()
 
-	glog.Info("Taking water level")
-	waterLevel := m.takeWaterLevelMeasurement()
+	go func(measurementIDChan chan *gocql.UUID, timeOfMeasurement time.Time, manual bool) {
+		glog.Info("Taking water level")
+		waterLevel := m.takeWaterLevelMeasurement()
 
-	glog.Infof("Sending measurement (water level: %f and picture) to server", waterLevel)
-	measurementID, err := m.server.PostNodeMeasurement(server.APIMeasurement{
-		Time:       time,
-		WaterLevel: waterLevel,
-		ManualReading:  manual,
-	})
-	if err != nil {
-		glog.Errorf("Error sending measurement %f to server: %v. Skipping measurement", waterLevel, err)
-		return
-	}
+		glog.Infof("Sending measurement (water level: %f and picture) to server", waterLevel)
+		measurementID, err := m.server.PostNodeMeasurement(server.APIMeasurement{
+			Time:       timeOfMeasurement,
+			WaterLevel: waterLevel,
+			ManualReading:  manual,
+		})
+		if err != nil {
+			glog.Errorf("Error sending measurement %f to server: %v. Skipping measurement", waterLevel, err)
+			measurementIDChan <- nil
+			return
+		}
+		glog.Infof("Sending measurement ID %v to picture routine", measurementID)
+		measurementIDChan <- measurementID
+		glog.Infof("Measurement ID %v sent", measurementID)
+	}(measurementIDChan, timeOfMeasurement, manual)
 
-	glog.Info("Taking picture")
-	go func() {
-		pictureFile, err := m.takePicture(time)
+	go func(measurementIDChan chan *gocql.UUID, timeOfMeasurement time.Time) {
+		glog.Info("Taking picture")
+		pictureFile, err := m.takePicture(timeOfMeasurement)
 		if err != nil {
 			glog.Errorf("Error taking picture: %v. Skipping measurement", err)
+			return
+		}
+
+		glog.Infof("Picture taken. Waiting for measurement ID from water level routine")
+		measurementID := <-measurementIDChan
+		glog.Infof("Measurement ID %v received", measurementID)
+		if measurementID == nil {
+			glog.Errorf("Measurement ID is nil, skipping picture upload")
 			return
 		}
 
@@ -97,7 +113,7 @@ func (m *Measurer) takeMeasurement(manual bool) {
 			glog.Errorf("Error sending picture to server: %v", err)
 			return
 		}
-	}()
+	}(measurementIDChan, timeOfMeasurement)
 }
 
 // Start starts measurer process. Exits when stop is received

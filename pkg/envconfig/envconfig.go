@@ -30,6 +30,10 @@ type Config struct {
 	SerialPort                          string
 	// Baud rate de Arduino
 	Baud                                int
+	// Constraseña de nodo para comunicación con servidor
+	NodePassword                        string
+	// Secreto de JWT para comunicación con servidor
+	Secret                              string
 	// URL servidor
 	ServerURL                           string
 	// URL para obtener configuración de nodo
@@ -40,6 +44,10 @@ type Config struct {
 	PostNodePictureURL                  string
 	// URL para obtener pedido de medición manual
 	GetManualMeasurementRequestURL      string
+	// Máxima cantidad de retries para cliente HTTP
+	HTTPClientMaxRetries                int
+	// Mínima cantidad de segundos a esperar antes de un retry para cliente HTTP
+	HTTPClientRetryWaitMin              int
 	// Timeout para actualización de intervalo de toma de mediciones
 	IntervalUpdateTimeout               int
 	// Timeout para actualización de configuración de nodo
@@ -48,6 +56,10 @@ type Config struct {
 	ManualMeasurementRequestSendTimeout int
 	// Timeout de envío de nueva medición para analizar 
 	MeasurementToAnalyzerSendTimeout    int
+	// Calidad de la captura de piCamera (jpeg quality <0 to 100>)
+	CameraPictureQuality                int
+	// Timeout para captura de piCamera em milisegundos
+	CameraCaptureTimeout                int
 }
 
 // New returns a new Config struct loading variables from .env and using defaults for the values not present
@@ -64,15 +76,21 @@ func New() *Config {
 		PicturesDir:                         getEnv("PICTURES_DIR", "/home/pi/Documents/pictures"),
 		SerialPort:                          getEnv("SERIAL_PORT", "/dev/ttyACM0"),
 		Baud:                                getEnvAsInt("BAUD", 9600),
+		NodePassword:                        getEnv("NODE_PASSWORD", "1"),
+		Secret:                              getEnv("SECRET", "hydromon2020"),
 		ServerURL:                           serverURL,
 		GetNodeConfigurationURL:             serverURL + getEnv("GET_NODE_CONFIGURATION_PATH", "/api/nodes/%s/configuration"),
 		PostNodeMeasurementURL:              serverURL + getEnv("POST_NODE_MEASUREMENT_PATH", "/api/nodes/%s/readings"),
 		PostNodePictureURL:                  serverURL + getEnv("POST_NODE_PICTURE_PATH", "/api/nodes/%s/readings/%s/photos"),
 		GetManualMeasurementRequestURL:      serverURL + getEnv("GET_MANUAL_MEASUREMENT_REQUEST_PATH", "/api/nodes/%s/manual-reading"),
+		HTTPClientMaxRetries:                getEnvAsInt("HTTP_CLIENT_MAX_RETRIES", 5),
+		HTTPClientRetryWaitMin:              getEnvAsInt("HTTP_CLIENT_RETRY_WAIT_MIN", 4),
 		IntervalUpdateTimeout:               getEnvAsInt("INTERVAL_UPDATE_TIMEOUT", 10),
 		ConfigurationUpdateTimeout:          getEnvAsInt("CONFIGURATION_UPDATE_TIMEOUT", 10),
 		ManualMeasurementRequestSendTimeout: getEnvAsInt("MANUAL_MEASUREMENT_REQUEST_SEND_TIMEOUT", 10),
 		MeasurementToAnalyzerSendTimeout:    getEnvAsInt("MEASUREMENT_TO_ANALYZER_SEND_TIMEOUT", 10),
+		CameraPictureQuality:                getEnvAsInt("PICTURE_QUALITY", 20),
+		CameraCaptureTimeout:                getEnvAsInt("PICTURE_CAPTURE_TIMEOUT", 500),
 	}
 }
 
