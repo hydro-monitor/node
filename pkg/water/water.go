@@ -47,7 +47,7 @@ func (w *WaterLevel) TakeWaterLevel() (float64, error) {
 	*/
 
 	glog.Infof("Measurement received: %q", buffer[:n])
-	str := string(buffer[:n])
+	str := string(buffer[1:n])
 	nStr := strings.TrimRight(str, "\r\n")
 	f, err := strconv.ParseFloat(nStr, 64)
 	if err != nil {

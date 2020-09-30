@@ -44,19 +44,28 @@ void loop() {
         // Calculo del nivel detectado en base a una verificación de 2 de 3
         if (distancia_sensor_1 == distancia_sensor_2) {
             nivel = distancia_sensor_1;
+            Serial.print("c");
             Serial.println(nivel);
             return;
         } else if (distancia_sensor_1 == distancia_sensor_3) {
             nivel = distancia_sensor_1;
+            Serial.print("c");
             Serial.println(nivel);
             return;
         } else if (distancia_sensor_2 == distancia_sensor_3) {
             nivel = distancia_sensor_2;
+            Serial.print("c");
             Serial.println(nivel);
             return;
         }
 
         // No hay coincidencia entre mediciones
-        Serial.println("Inconcluso");
+        Serial.print("a");
+        Serial.println((distancia_sensor_1 + distancia_sensor_2 + distancia_sensor_3) / 3);
+        //Serial.print(distancia_sensor_1);
+        //Serial.print(",");
+        //Serial.print(distancia_sensor_2);
+        //Serial.print(",");
+        //Serial.println(distancia_sensor_3);
     }
 }
