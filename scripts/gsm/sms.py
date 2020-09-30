@@ -12,7 +12,7 @@ time.sleep(3)
 
 # Enable Serial Communication
 
-port = serial.Serial("/dev/ttyS0", baudrate=19200, timeout=1)
+port = serial.Serial("/dev/ttyS0", baudrate=115200, timeout=1)
 
 print "Arranca"
 
