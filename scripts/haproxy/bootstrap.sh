@@ -52,11 +52,11 @@ frontend main
 
 backend app
 	balance roundrobin
-	option httpchk GET /health
+	option ssl-hello-chk
 	option log-health-checks
-	server srv1 104.211.23.145:8080 check port 8080 inter 120000 fall 3
-	server srv2 13.90.231.210:8080 check port 8080 inter 120000 fall 3
-	server srv3 18.229.102.224:443 check port 443 inter 120000 fall 3
+	server srv1 azure-1.hydromon-1.software:443 check ssl verify none port 443 inter 120000 fall 3
+	server srv2 azure-2.hydromon-1.software:443 check ssl verify none port 443 inter 120000 fall 3
+	server srv3 azure-3.hydromon-1.software:443 check ssl verify none port 443 inter 120000 fall 3
 EOF
 
 # Restart HA Proxy with new config
